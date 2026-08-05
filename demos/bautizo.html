@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Demo: Invitación Digital de Bautizo — Emilio | Invitaciones Digitales</title>
+<meta name="description" content="Demo funcional de invitación digital de bautizo: ceremonia, padrinos, cuenta regresiva y confirmación de asistencia (RSVP), lista para adaptar a tu evento.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://invitaciones.ambarrojostudios.com/demos/bautizo.html">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="es_MX">
+<meta property="og:site_name" content="Invitaciones Digitales · Ámbar Rojo Studios">
+<meta property="og:title" content="Demo: Invitación Digital de Bautizo">
+<meta property="og:description" content="Ceremonia, padrinos, cuenta regresiva y RSVP — así se ve una invitación digital de bautizo hecha a la medida.">
+<meta property="og:image" content="https://images.unsplash.com/photo-1543342384-1f1350e27861?w=1200&q=75&auto=format&fit=crop">
+<meta property="og:url" content="https://invitaciones.ambarrojostudios.com/demos/bautizo.html">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Demo: Invitación Digital de Bautizo">
+<meta name="twitter:description" content="Ceremonia, padrinos, cuenta regresiva y RSVP — invitación digital de bautizo a la medida.">
+<meta name="twitter:image" content="https://images.unsplash.com/photo-1543342384-1f1350e27861?w=1200&q=75&auto=format&fit=crop">
+<meta name="theme-color" content="#5C8AA6">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://images.unsplash.com">
+
+<!--
+  PLANTILLA DE INVITACIÓN DIGITAL — Invitaciones Digitales
+  Personalizar: nombre "Emilio", fecha (WEDDING_DATE en el script),
+  parroquia/salón, padres/padrinos, fotos (hoy son de referencia).
+  Enlace de RSVP: si el link trae ?event=&g=&n= (invitado real, opcional según si el cliente
+  pasó lista de invitados), el RSVP se guarda en Neon vía el webhook de n8n "Invitaciones — RSVP".
+  Sin esos parámetros, el RSVP es solo local (demo).
+-->
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Quicksand:wght@400;500;600;700&display=swap');
+
+  :root{
+    --paper:#F6FAFB;
+    --paper-2:#EAF2F4;
+    --ink:#233238;
+    --ink-soft:#63767D;
+    --sky:#5C8AA6;
+    --sky-soft:#DCEAF0;
+    --sand:#D9B98A;
+    --line:#D7E5EA;
+    --serif-display:'Cormorant Garamond', 'Times New Roman', serif;
+    --sans-body:'Quicksand', system-ui, sans-serif;
+  }
+
+  *{ margin:0; padding:0; box-sizing:border-box; }
+  html{ scroll-behavior:smooth; }
+  body{ background:var(--paper); color:var(--ink); font-family:var(--sans-body); font-size:17px; line-height:1.65; overflow-x:hidden; padding-top:38px; }
+  ::selection{ background:var(--sky); color:#fff; }
+  .wrap{ max-width:640px; margin:0 auto; padding:0 28px; }
+
+  body::before{
+    content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+    background-image:
+      radial-gradient(circle at 8% 6%, rgba(92,138,166,.10), transparent 42%),
+      radial-gradient(circle at 94% 96%, rgba(217,185,138,.12), transparent 45%);
+  }
+  section{ position:relative; z-index:1; }
+  h1,h2,h3{ font-family:var(--serif-display); font-weight:500; }
+  .eyebrow{ font-family:var(--sans-body); font-weight:600; font-size:12px; letter-spacing:.28em; text-transform:uppercase; color:var(--sky); }
+  .rule{ width:44px; height:1px; background:var(--sand); margin:18px auto; }
+
+  #demo-bar{ position:fixed; top:0; left:0; right:0; z-index:60; background:var(--ink); color:var(--paper); display:flex; align-items:center; justify-content:center; gap:14px; font-size:13px; padding:9px 14px; text-align:center; }
+  #demo-bar a{ color:var(--paper); text-decoration:underline; text-underline-offset:3px; }
+  #demo-bar b{ color:var(--sand); }
+
+  #envelope{
+    position:fixed; inset:0; z-index:50;
+    background:
+      linear-gradient(rgba(35,50,56,.6), rgba(35,50,56,.75)),
+      url('https://commons.wikimedia.org/wiki/Special:FilePath/Candle%2C_Baptismal_font%2C_mural%2C_Basilica_in_Eger%2C_2016_Hungary.jpg?width=1200') center/cover;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; color:#fff; text-align:center; gap:22px; transition:transform .9s cubic-bezier(.65,0,.35,1), opacity .7s ease;
+  }
+  #envelope.open{ transform:translateY(-100%); opacity:0; pointer-events:none; }
+  #envelope .seal{ width:78px; height:78px; border-radius:50%; border:1px solid rgba(255,255,255,.5); display:flex; align-items:center; justify-content:center; font-family:var(--serif-display); font-size:26px; font-style:italic; }
+  #envelope .env-names{ font-family:var(--serif-display); font-style:italic; font-size:19px; opacity:.9; }
+  #envelope button{ font-family:var(--sans-body); font-weight:600; font-size:14px; color:var(--sky); background:#fff; border:none; padding:13px 34px; border-radius:99px; cursor:pointer; }
+  #envelope .hint{ font-size:11px; letter-spacing:.18em; text-transform:uppercase; opacity:.6; }
+
+  .reveal{ opacity:0; transform:translateY(22px); transition:opacity .8s ease, transform .8s ease; }
+  .reveal.show{ opacity:1; transform:none; }
+
+  /* stagger de la galería al aparecer */
+  .gal-grid img{ opacity:0; transform:scale(.94); transition:opacity .6s ease, transform .6s ease; }
+  .reveal.show .gal-grid img{ opacity:1; transform:none; }
+  .gal-grid img:nth-child(1){ transition-delay:.05s; } .gal-grid img:nth-child(2){ transition-delay:.1s; }
+  .gal-grid img:nth-child(3){ transition-delay:.15s; } .gal-grid img:nth-child(4){ transition-delay:.2s; }
+  .gal-grid img:nth-child(5){ transition-delay:.25s; } .gal-grid img:nth-child(6){ transition-delay:.3s; }
+
+  /* pulso sutil en el botón de RSVP */
+  form button{ animation:pulse-rsvp 2.8s ease-in-out infinite; }
+  @keyframes pulse-rsvp{ 0%,100%{ box-shadow:0 0 0 0 rgba(92,138,166,.35); } 50%{ box-shadow:0 0 0 9px rgba(92,138,166,0); } }
+
+  @media (prefers-reduced-motion: reduce){
+    .gal-grid img{ opacity:1; transform:none; transition:none; }
+    form button{ animation:none; }
+  }
+
+  #hero{
+    min-height:100svh; display:flex; flex-direction:column; align-items:center; justify-content:flex-end;
+    text-align:center; padding:80px 28px 64px;
+    width:100vw; margin-left:calc(50% - 50vw); margin-right:calc(50% - 50vw);
+    background:
+      linear-gradient(to bottom, rgba(35,50,56,.1) 0%, rgba(35,50,56,.3) 55%, rgba(18,26,29,.9) 100%),
+      url('https://images.unsplash.com/photo-1543342384-1f1350e27861?w=1400&q=70&auto=format&fit=crop') center 25%/cover;
+    color:#fff;
+  }
+  #hero .date-tag{ font-size:13px; letter-spacing:.3em; color:#DCEAF0; margin-bottom:22px; }
+  #hero .sub{ font-family:var(--sans-body); font-weight:600; letter-spacing:.1em; text-transform:uppercase; font-size:13px; color:var(--sand); margin-bottom:10px; }
+  #hero h1{ font-size:clamp(44px,11vw,72px); line-height:1.05; font-style:italic; color:#fff; }
+  #hero p.quote{ font-family:var(--serif-display); font-style:italic; color:#DCEAF0; max-width:400px; margin-top:22px; font-size:19px; }
+
+  #countdown{ padding:64px 0; text-align:center; }
+  .cd-grid{ display:flex; justify-content:center; gap:clamp(10px,4vw,28px); margin-top:24px; }
+  .cd-unit{ min-width:64px; }
+  .cd-unit b{ display:block; font-family:var(--serif-display); font-size:clamp(32px,6vw,46px); color:var(--sky); line-height:1; }
+  .cd-unit span{ display:block; font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--ink-soft); margin-top:8px; }
+
+  .card{ background:var(--paper-2); border:1px solid var(--line); border-radius:4px; padding:30px 26px; margin-top:18px; }
+  .venue-grid{ display:grid; gap:18px; margin-top:8px; }
+  .venue{ text-align:center; }
+  .venue h3{ font-size:24px; margin:6px 0 4px; }
+  .venue .time{ font-family:var(--serif-display); font-style:italic; color:var(--sky); font-size:16px; }
+  .venue address{ font-style:normal; color:var(--ink-soft); font-size:14.5px; margin:8px 0 16px; }
+  .btn{ display:inline-block; font-weight:600; font-size:13.5px; color:var(--sky); border:1px solid var(--sky); padding:10px 24px; border-radius:99px; text-decoration:none; transition:background .2s ease, color .2s ease; }
+  .btn:hover{ background:var(--sky); color:#fff; }
+
+  #itinerario{ padding:64px 0; }
+  .timeline{ margin-top:34px; position:relative; padding-left:26px; }
+  .timeline::before{ content:''; position:absolute; left:4px; top:6px; bottom:6px; width:1px; background:var(--line); }
+  .t-item{ position:relative; padding-bottom:26px; }
+  .t-item::before{ content:''; position:absolute; left:-26px; top:5px; width:9px; height:9px; border-radius:50%; background:var(--sky); }
+  .t-item .h{ font-family:var(--serif-display); font-style:italic; color:var(--sky); font-size:16px; }
+  .t-item .l{ font-size:15.5px; margin-top:2px; }
+
+  #familia{ text-align:center; padding:64px 0; }
+  .familia-grid{ display:grid; grid-template-columns:1fr 1fr; gap:30px; margin-top:32px; }
+  .familia-grid h4{ font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:var(--sand); margin-bottom:10px; }
+  .familia-grid p{ font-size:15px; }
+
+  .two-col{ display:grid; gap:16px; margin-top:18px; }
+  @media(min-width:560px){ .two-col{ grid-template-columns:1fr 1fr; } }
+  .info-card{ background:var(--paper-2); border:1px solid var(--line); padding:26px; text-align:center; border-radius:4px; }
+  .info-card h3{ font-size:20px; margin-bottom:8px; }
+  .info-card p{ font-size:14.5px; color:var(--ink-soft); }
+  .swatches{ display:flex; justify-content:center; gap:8px; margin-top:14px; }
+  .swatch{ width:22px; height:22px; border-radius:50%; border:1px solid var(--line); }
+
+  #galeria{ padding:64px 0; text-align:center; }
+  .gal-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:28px; }
+  .gal-grid img, .gal-grid .ph{ width:100%; aspect-ratio:3/4; object-fit:cover; border-radius:3px; }
+  .ph{ background:linear-gradient(155deg,var(--sky-soft),var(--paper-2) 60%,var(--line)); }
+  .gal-grid img:nth-child(2), .gal-grid .ph:nth-child(2),
+  .gal-grid img:nth-child(5), .gal-grid .ph:nth-child(5){ aspect-ratio:1/1; }
+
+  #rsvp{ padding:64px 0; text-align:center; }
+  form{ margin-top:30px; display:flex; flex-direction:column; gap:14px; text-align:left; }
+  form label{ font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-soft); display:block; margin-bottom:6px; }
+  form input, form select, form textarea{ width:100%; font:inherit; font-size:15px; padding:12px 14px; border-radius:3px; border:1px solid var(--line); background:var(--paper); color:var(--ink); outline:none; }
+  form input:focus, form select:focus, form textarea:focus{ border-color:var(--sky); }
+  .radio-row{ display:flex; gap:10px; }
+  .radio-row label{ flex:1; border:1px solid var(--line); border-radius:3px; padding:12px; text-align:center; cursor:pointer; font-size:14px; color:var(--ink); text-transform:none; letter-spacing:0; }
+  .radio-row input{ display:none; }
+  .radio-row input:checked + span{ color:var(--sky); font-weight:600; }
+  form button{ margin-top:8px; font-weight:600; font-size:15.5px; background:var(--sky); color:#fff; border:none; padding:15px; border-radius:99px; cursor:pointer; }
+  #rsvp-ok{ display:none; margin-top:18px; color:var(--sand); font-style:italic; }
+
+  footer{ padding:70px 0 50px; text-align:center; }
+  footer .amp{ font-family:var(--serif-display); font-style:italic; color:var(--sky); font-size:34px; }
+  footer .credit{ margin-top:40px; font-size:11px; letter-spacing:.1em; color:var(--ink-soft); opacity:.6; }
+
+  h2.section-title{ text-align:center; font-size:clamp(30px,7vw,42px); font-style:italic; }
+</style>
+</head>
+<body>
+
+<div id="demo-bar">
+  <span><b>Demo</b> · Invitación de Bautizo — Invitaciones Digitales</span>
+  <a href="../index.html">← Ver todos los diseños</a>
+</div>
+
+<div id="envelope">
+  <div class="seal">E</div>
+  <div class="env-names">Bautizo de Emilio</div>
+  <div class="hint" id="guest-greeting" style="display:none; margin-top:-8px;"></div>
+  <button id="envelope-btn">Abrir invitación</button>
+  <div class="hint">Toca para continuar</div>
+</div>
+
+<main class="wrap">
+
+  <section id="hero">
+    <div class="date-tag">09 · 05 · 2027</div>
+    <div class="sub">Con la bendición de Dios</div>
+    <h1>Emilio</h1>
+    <p class="quote">"Te consagro con agua y con el Espíritu Santo."</p>
+  </section>
+
+  <section id="countdown" class="reveal">
+    <p class="eyebrow">Faltan</p>
+    <div class="cd-grid">
+      <div class="cd-unit"><b id="cd-d">00</b><span>Días</span></div>
+      <div class="cd-unit"><b id="cd-h">00</b><span>Hrs</span></div>
+      <div class="cd-unit"><b id="cd-m">00</b><span>Min</span></div>
+      <div class="cd-unit"><b id="cd-s">00</b><span>Seg</span></div>
+    </div>
+  </section>
+
+  <section id="ubicacion" class="reveal" style="padding:64px 0;">
+    <h2 class="section-title">Dónde celebramos</h2>
+    <div class="rule"></div>
+    <div class="venue-grid">
+      <div class="card venue">
+        <p class="eyebrow">Ceremonia</p>
+        <h3>Parroquia del Espíritu Santo</h3>
+        <p class="time">12:00 h</p>
+        <address>Calzada de los Hombres Ilustres 30, Chis.</address>
+        <a class="btn" href="https://maps.google.com" target="_blank" rel="noopener">Ver ubicación</a>
+      </div>
+      <div class="card venue">
+        <p class="eyebrow">Comida</p>
+        <h3>Casa de la familia</h3>
+        <p class="time">14:00 h</p>
+        <address>Priv. Las Palmas 12, Tuxtla Gutiérrez, Chis.</address>
+        <a class="btn" href="https://maps.google.com" target="_blank" rel="noopener">Ver ubicación</a>
+      </div>
+    </div>
+  </section>
+
+  <section id="itinerario" class="reveal">
+    <h2 class="section-title">Itinerario</h2>
+    <div class="rule"></div>
+    <div class="timeline">
+      <div class="t-item"><div class="h">12:00</div><div class="l">Ceremonia religiosa</div></div>
+      <div class="t-item"><div class="h">13:00</div><div class="l">Fotografías</div></div>
+      <div class="t-item"><div class="h">14:00</div><div class="l">Comida</div></div>
+      <div class="t-item"><div class="h">16:00</div><div class="l">Brindis</div></div>
+      <div class="t-item"><div class="h">17:00</div><div class="l">Juegos y piñata</div></div>
+    </div>
+  </section>
+
+  <section id="familia" class="reveal">
+    <h2 class="section-title">Con el cariño de</h2>
+    <div class="rule"></div>
+    <div class="familia-grid">
+      <div>
+        <h4>Papás</h4>
+        <p>Mariana Gómez<br>Sebastián Cruz</p>
+      </div>
+      <div>
+        <h4>Padrinos</h4>
+        <p>Renata Cruz &amp; Óscar Gómez</p>
+      </div>
+    </div>
+  </section>
+
+  <section style="padding:64px 0;" class="reveal">
+    <h2 class="section-title">Detalles</h2>
+    <div class="rule"></div>
+    <div class="two-col">
+      <div class="info-card">
+        <h3>Código de vestimenta</h3>
+        <p>Casual elegante — tonos azules y neutros</p>
+        <div class="swatches">
+          <div class="swatch" style="background:#5C8AA6"></div>
+          <div class="swatch" style="background:#D9B98A"></div>
+          <div class="swatch" style="background:#DCEAF0"></div>
+          <div class="swatch" style="background:#233238"></div>
+        </div>
+      </div>
+      <div class="info-card">
+        <h3>Regalo</h3>
+        <p>Lo más importante es tu presencia y tus oraciones para Emilio en este día tan especial.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="galeria" class="reveal">
+    <h2 class="section-title">Momentos</h2>
+    <div class="rule"></div>
+    <div class="gal-grid">
+      <img src="https://images.unsplash.com/photo-1543342384-1f1350e27861?w=400&q=70&auto=format&fit=crop" alt="Padres con su bebé">
+      <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Baptismal_font_%26_paschal_candle%2C_Sacred_Heart_Church%2C_Ponsonby.jpg?width=400" alt="Pila bautismal">
+      <div class="ph"></div>
+      <img src="https://images.unsplash.com/photo-1519689680058-324335c77eba?w=400&q=70&auto=format&fit=crop" alt="Bebé sonriendo">
+      <div class="ph"></div>
+      <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Candle%2C_Baptismal_font%2C_mural%2C_Basilica_in_Eger%2C_2016_Hungary.jpg?width=400" alt="Vela y pila bautismal">
+    </div>
+  </section>
+
+  <section id="rsvp" class="reveal">
+    <h2 class="section-title">Confirma tu asistencia</h2>
+    <div class="rule"></div>
+    <p style="color:var(--ink-soft); font-size:15px; margin-top:10px;">Antes del 20 de abril de 2027</p>
+    <form id="rsvp-form">
+      <div><label for="nombre">Nombre completo</label><input id="nombre" required placeholder="¿Quién confirma?"></div>
+      <div>
+        <label>¿Asistirás?</label>
+        <div class="radio-row">
+          <label><input type="radio" name="asiste" value="si" checked><span>Sí, ahí estaré</span></label>
+          <label><input type="radio" name="asiste" value="no"><span>No podré ir</span></label>
+        </div>
+      </div>
+      <div><label for="msg">Mensaje (opcional)</label><textarea id="msg" rows="3" placeholder="Un mensaje para la familia"></textarea></div>
+      <div><label for="restricciones">Alergias o restricciones alimenticias (opcional)</label><input id="restricciones" placeholder="Ej. vegetariano, sin gluten"></div>
+      <button type="submit">Enviar confirmación</button>
+    </form>
+    <p id="rsvp-ok">¡Gracias! Tu confirmación fue registrada.</p>
+  </section>
+
+  <footer class="reveal">
+    <div class="amp">E</div>
+    <p style="margin-top:10px; color:var(--ink-soft);">9 de mayo, 2027</p>
+    <p class="credit">Invitación digital · Invitaciones Digitales</p>
+  </footer>
+
+</main>
+
+<script>
+  document.getElementById('envelope-btn').addEventListener('click', () => {
+    document.getElementById('envelope').classList.add('open');
+    document.body.style.overflow = 'auto';
+  });
+  document.body.style.overflow = 'hidden';
+
+  const WEDDING_DATE = new Date('2027-05-09T12:00:00-06:00').getTime();
+  function tick(){
+    const diff = WEDDING_DATE - Date.now();
+    const d = Math.max(0, Math.floor(diff / 86400000));
+    const h = Math.max(0, Math.floor((diff % 86400000) / 3600000));
+    const m = Math.max(0, Math.floor((diff % 3600000) / 60000));
+    const s = Math.max(0, Math.floor((diff % 60000) / 1000));
+    document.getElementById('cd-d').textContent = String(d).padStart(2,'0');
+    document.getElementById('cd-h').textContent = String(h).padStart(2,'0');
+    document.getElementById('cd-m').textContent = String(m).padStart(2,'0');
+    document.getElementById('cd-s').textContent = String(s).padStart(2,'0');
+  }
+  tick();
+  setInterval(tick, 1000);
+
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('show'); });
+  }, { threshold: 0.15 });
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+  // invitado personalizado — el link trae ?event=...&g=slug&n=Nombre (lo genera el equipo con n8n, opcional)
+  const params = new URLSearchParams(location.search);
+  const guestSlug = params.get('g');
+  const guestName = params.get('n');
+  const eventSlug = params.get('event');
+  if (guestName){
+    const greeting = document.getElementById('guest-greeting');
+    greeting.textContent = `Esta invitación es para ${guestName}`;
+    greeting.style.display = 'block';
+    const nombreInput = document.getElementById('nombre');
+    nombreInput.value = guestName;
+    nombreInput.readOnly = true;
+  }
+
+  // RSVP — si el link trae invitado (g), se guarda en la base vía n8n; si no, es solo demo local
+  const RSVP_WEBHOOK = 'https://n8nambarrojo.ambarrojostudios.cloud/webhook/invitaciones-rsvp';
+  document.getElementById('rsvp-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const asiste = e.target.querySelector('input[name="asiste"]:checked').value;
+    const mensaje = document.getElementById('msg').value;
+    const restricciones = document.getElementById('restricciones').value;
+    if (guestSlug && eventSlug){
+      try {
+        await fetch(RSVP_WEBHOOK, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ slug: guestSlug, event: eventSlug, asiste, mensaje, restricciones })
+        });
+      } catch (err) {
+        // ponytail: sin reintentos ni cola offline — si falla la red, el invitado puede reenviar el formulario
+      }
+    }
+    document.getElementById('rsvp-ok').style.display = 'block';
+    e.target.reset();
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Invitados — Panel interno</title>
+<meta name="robots" content="noindex, nofollow">
+
+<!--
+  PANEL INTERNO — no es para clientes ni invitados, es para que el equipo vea quién confirmó.
+  Consulta el workflow de n8n "Invitaciones — Lista de Invitados" (webhook GET).
+  Deja el campo de evento vacío para ver todos los eventos juntos.
+-->
+
+<style>
+  :root{
+    --ink:#3D2B1F; --ink-soft:#8A7460; --paper:#FBF3E6; --panel:#FFFCF6;
+    --line:#E9DCC5; --ok:#5C7A4F; --no:#A32B3F; --pend:#C68A2E;
+  }
+  *{ margin:0; padding:0; box-sizing:border-box; }
+  body{ background:var(--paper); color:var(--ink); font-family:system-ui,sans-serif; padding:28px 20px 60px; }
+  .wrap{ max-width:920px; margin:0 auto; }
+  h1{ font-size:22px; }
+  p.hint{ color:var(--ink-soft); font-size:14px; margin-top:6px; }
+  .toolbar{ display:flex; gap:10px; flex-wrap:wrap; margin:22px 0; align-items:center; }
+  input, button{ font:inherit; font-size:14px; }
+  input{ padding:10px 12px; border:1px solid var(--line); border-radius:8px; background:var(--panel); color:var(--ink); min-width:220px; }
+  button{ padding:10px 18px; border:none; border-radius:8px; background:var(--ink); color:var(--paper); cursor:pointer; }
+  button:hover{ opacity:.9; }
+  .summary{ display:flex; gap:14px; flex-wrap:wrap; margin-bottom:18px; }
+  .summary .card{ background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px 18px; }
+  .summary b{ display:block; font-size:22px; }
+  .summary span{ font-size:12px; color:var(--ink-soft); }
+  table{ width:100%; border-collapse:collapse; background:var(--panel); border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+  th, td{ text-align:left; padding:10px 12px; border-bottom:1px solid var(--line); font-size:14px; }
+  th{ background:#F3E9D6; font-size:12px; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-soft); }
+  tr:last-child td{ border-bottom:none; }
+  .badge{ display:inline-block; padding:3px 10px; border-radius:99px; font-size:12px; font-weight:600; }
+  .badge.confirmado{ background:#E4EEDD; color:var(--ok); }
+  .badge.no_asiste{ background:#F5DEE1; color:var(--no); }
+  .badge.pendiente{ background:#F6E8CC; color:var(--pend); }
+  #estado{ color:var(--ink-soft); font-size:14px; margin:10px 0; }
+  #vacio{ display:none; color:var(--ink-soft); padding:24px; text-align:center; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <h1>Confirmaciones de invitados</h1>
+  <p class="hint">Consulta en vivo a la base de invitados. Deja el evento vacío para verlos todos.</p>
+
+  <div class="toolbar">
+    <input id="evento" placeholder="Slug del evento (ej. valentina-mateo) — vacío = todos">
+    <button id="buscar">Buscar</button>
+  </div>
+
+  <div class="summary" id="resumen"></div>
+  <p id="estado"></p>
+  <table id="tabla" style="display:none">
+    <thead>
+      <tr><th>Evento</th><th>Nombre</th><th>Estado</th><th>Mensaje</th><th>Respondió</th></tr>
+    </thead>
+    <tbody id="filas"></tbody>
+  </table>
+  <p id="vacio">Sin invitados todavía para este filtro.</p>
+</div>
+
+<script>
+  const LIST_WEBHOOK = 'https://n8nambarrojo.ambarrojostudios.cloud/webhook/invitaciones-lista';
+  const STATUS_LABEL = { confirmado: 'Confirmó', no_asiste: 'No asiste', pendiente: 'Pendiente' };
+
+  async function cargar(){
+    const evento = document.getElementById('evento').value.trim();
+    const estadoEl = document.getElementById('estado');
+    const tabla = document.getElementById('tabla');
+    const vacio = document.getElementById('vacio');
+    estadoEl.textContent = 'Cargando…';
+    tabla.style.display = 'none';
+    vacio.style.display = 'none';
+
+    try {
+      const url = new URL(LIST_WEBHOOK);
+      if (evento) url.searchParams.set('event', evento);
+      const res = await fetch(url);
+      const guests = (await res.json()).guests;
+
+      const counts = { confirmado: 0, no_asiste: 0, pendiente: 0 };
+      guests.forEach(g => { counts[g.status] = (counts[g.status] || 0) + 1; });
+      document.getElementById('resumen').innerHTML = `
+        <div class="card"><b>${guests.length}</b><span>Invitados</span></div>
+        <div class="card"><b>${counts.confirmado}</b><span>Confirmaron</span></div>
+        <div class="card"><b>${counts.no_asiste}</b><span>No asisten</span></div>
+        <div class="card"><b>${counts.pendiente}</b><span>Sin responder</span></div>
+      `;
+
+      if (guests.length === 0){
+        vacio.style.display = 'block';
+        estadoEl.textContent = '';
+        return;
+      }
+
+      document.getElementById('filas').innerHTML = guests.map(g => `
+        <tr>
+          <td>${g.event_slug}</td>
+          <td>${g.name}</td>
+          <td><span class="badge ${g.status}">${STATUS_LABEL[g.status] || g.status}</span></td>
+          <td>${g.message ? g.message : '—'}</td>
+          <td>${g.responded_at ? new Date(g.responded_at).toLocaleString('es-MX') : '—'}</td>
+        </tr>
+      `).join('');
+      tabla.style.display = 'table';
+      estadoEl.textContent = '';
+    } catch (err){
+      estadoEl.textContent = 'No se pudo cargar — revisa tu conexión o el workflow de n8n.';
+    }
+  }
+
+  document.getElementById('buscar').addEventListener('click', cargar);
+  document.getElementById('evento').addEventListener('keydown', (e) => { if (e.key === 'Enter') cargar(); });
+  cargar();
+</script>
+
+</body>
+</html>

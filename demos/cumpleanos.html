@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Demo: Invitación Digital de Cumpleaños — Diego 30 | Invitaciones Digitales</title>
+<meta name="description" content="Demo funcional de invitación digital para cumpleaños y eventos sociales: cuenta regresiva, ubicación, itinerario y confirmación de asistencia (RSVP), lista para adaptar a tu fiesta.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://invitaciones.ambarrojostudios.com/demos/cumpleanos.html">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="es_MX">
+<meta property="og:site_name" content="Invitaciones Digitales · Ámbar Rojo Studios">
+<meta property="og:title" content="Demo: Invitación Digital de Cumpleaños">
+<meta property="og:description" content="Look moderno y directo para fiestas, aniversarios o eventos de negocio — con cuenta regresiva y RSVP.">
+<meta property="og:image" content="https://images.unsplash.com/photo-1467810563316-b5476525c0f9?w=1200&q=75&auto=format&fit=crop">
+<meta property="og:url" content="https://invitaciones.ambarrojostudios.com/demos/cumpleanos.html">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Demo: Invitación Digital de Cumpleaños">
+<meta name="twitter:description" content="Cuenta regresiva, itinerario y RSVP — invitación digital de cumpleaños a la medida.">
+<meta name="twitter:image" content="https://images.unsplash.com/photo-1467810563316-b5476525c0f9?w=1200&q=75&auto=format&fit=crop">
+<meta name="theme-color" content="#FF5A36">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://images.unsplash.com">
+
+<!--
+  PLANTILLA DE INVITACIÓN DIGITAL — Invitaciones Digitales
+  Personalizar: nombre "Diego", edad "30", fecha (WEDDING_DATE en el script),
+  lugar/itinerario, fotos (hoy son de Unsplash de referencia).
+  Enlace de RSVP: si el link trae ?event=&g=&n= (invitado real, opcional según si el cliente
+  pasó lista de invitados), el RSVP se guarda en Neon vía el webhook de n8n "Invitaciones — RSVP".
+  Sin esos parámetros, el RSVP es solo local (demo).
+-->
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+  :root{
+    --paper:#151312;
+    --paper-2:#1F1C1A;
+    --ink:#F4EEE6;
+    --ink-soft:#B4A99C;
+    --coral:#FF5A36;
+    --coral-soft:#3A241C;
+    --lime:#C9E265;
+    --line:#332E2A;
+    --serif-display:'Bricolage Grotesque', system-ui, sans-serif;
+    --mono:'IBM Plex Mono', monospace;
+  }
+
+  *{ margin:0; padding:0; box-sizing:border-box; }
+  html{ scroll-behavior:smooth; }
+  body{ background:var(--paper); color:var(--ink); font-family:var(--mono); font-size:16px; line-height:1.65; overflow-x:hidden; padding-top:38px; }
+  ::selection{ background:var(--coral); color:#151312; }
+  .wrap{ max-width:640px; margin:0 auto; padding:0 28px; }
+
+  body::before{
+    content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+    background-image:
+      radial-gradient(circle at 90% 4%, rgba(255,90,54,.16), transparent 40%),
+      radial-gradient(circle at 6% 96%, rgba(201,226,101,.10), transparent 45%);
+  }
+  section{ position:relative; z-index:1; }
+  h1,h2,h3{ font-family:var(--serif-display); font-weight:800; letter-spacing:-.02em; }
+  .eyebrow{ font-family:var(--mono); font-size:12px; letter-spacing:.24em; text-transform:uppercase; color:var(--coral); }
+  .rule{ width:44px; height:2px; background:var(--lime); margin:18px auto; }
+
+  #demo-bar{ position:fixed; top:0; left:0; right:0; z-index:60; background:var(--coral); color:#151312; display:flex; align-items:center; justify-content:center; gap:14px; font-family:var(--mono); font-size:13px; padding:9px 14px; text-align:center; font-weight:500; }
+  #demo-bar a{ color:#151312; text-decoration:underline; text-underline-offset:3px; }
+  #demo-bar b{ font-weight:700; }
+
+  #envelope{
+    position:fixed; inset:0; z-index:50;
+    background:
+      linear-gradient(rgba(255,90,54,.82), rgba(255,90,54,.88)),
+      url('https://images.unsplash.com/photo-1467810563316-b5476525c0f9?w=1200&q=70&auto=format&fit=crop') center/cover;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; color:#151312; text-align:center; gap:22px; transition:transform .9s cubic-bezier(.65,0,.35,1), opacity .7s ease;
+  }
+  #envelope.open{ transform:translateY(-100%); opacity:0; pointer-events:none; }
+  #envelope .seal{ width:80px; height:80px; border-radius:50%; background:#151312; color:var(--coral); display:flex; align-items:center; justify-content:center; font-family:var(--serif-display); font-size:26px; font-weight:800; }
+  #envelope .env-names{ font-family:var(--serif-display); font-weight:800; font-size:22px; }
+  #envelope button{ font-family:var(--mono); font-weight:600; font-size:14px; color:var(--ink); background:#151312; border:none; padding:13px 34px; border-radius:4px; cursor:pointer; }
+  #envelope .hint{ font-size:11px; letter-spacing:.18em; text-transform:uppercase; opacity:.7; }
+
+  .reveal{ opacity:0; transform:translateY(22px); transition:opacity .8s ease, transform .8s ease; }
+  .reveal.show{ opacity:1; transform:none; }
+
+  /* stagger de la galería al aparecer */
+  .gal-grid img{ opacity:0; transform:scale(.94); transition:opacity .6s ease, transform .6s ease; }
+  .reveal.show .gal-grid img{ opacity:1; transform:none; }
+  .gal-grid img:nth-child(1){ transition-delay:.05s; } .gal-grid img:nth-child(2){ transition-delay:.1s; }
+  .gal-grid img:nth-child(3){ transition-delay:.15s; } .gal-grid img:nth-child(4){ transition-delay:.2s; }
+  .gal-grid img:nth-child(5){ transition-delay:.25s; } .gal-grid img:nth-child(6){ transition-delay:.3s; }
+
+  /* pulso sutil en el botón de RSVP */
+  form button{ animation:pulse-rsvp 2.8s ease-in-out infinite; }
+  @keyframes pulse-rsvp{ 0%,100%{ box-shadow:0 0 0 0 rgba(255,90,54,.35); } 50%{ box-shadow:0 0 0 9px rgba(255,90,54,0); } }
+
+  @media (prefers-reduced-motion: reduce){
+    .gal-grid img{ opacity:1; transform:none; transition:none; }
+    form button{ animation:none; }
+  }
+
+  #hero{
+    min-height:100svh; display:flex; flex-direction:column; align-items:center; justify-content:flex-end;
+    text-align:center; padding:80px 28px 64px;
+    width:100vw; margin-left:calc(50% - 50vw); margin-right:calc(50% - 50vw);
+    background:
+      linear-gradient(to bottom, rgba(21,19,18,.2) 0%, rgba(21,19,18,.45) 55%, rgba(21,19,18,.95) 100%),
+      url('https://images.unsplash.com/photo-1513151233558-d860c5398176?w=1400&q=70&auto=format&fit=crop') center/cover;
+  }
+  #hero .date-tag{ font-size:13px; letter-spacing:.3em; color:var(--ink-soft); margin-bottom:22px; }
+  #hero h1{ font-size:clamp(44px,12vw,80px); line-height:.95; }
+  #hero h1 span{ color:var(--coral); }
+  #hero .num{ font-family:var(--serif-display); font-size:clamp(80px,22vw,160px); font-weight:800; color:var(--lime); line-height:.8; margin:8px 0; }
+  #hero p.quote{ color:var(--ink-soft); max-width:380px; margin-top:22px; font-size:14.5px; }
+
+  #countdown{ padding:64px 0; text-align:center; }
+  .cd-grid{ display:flex; justify-content:center; gap:clamp(10px,4vw,28px); margin-top:24px; }
+  .cd-unit{ min-width:64px; border:1px solid var(--line); border-radius:8px; padding:14px 8px; background:var(--paper-2); }
+  .cd-unit b{ display:block; font-family:var(--serif-display); font-size:clamp(28px,5vw,40px); color:var(--coral); line-height:1; }
+  .cd-unit span{ display:block; font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--ink-soft); margin-top:8px; }
+
+  .card{ background:var(--paper-2); border:1px solid var(--line); border-radius:8px; padding:30px 26px; margin-top:18px; }
+  .venue-grid{ display:grid; gap:18px; margin-top:8px; }
+  .venue{ text-align:center; }
+  .venue h3{ font-size:24px; margin:6px 0 4px; }
+  .venue .time{ font-family:var(--mono); color:var(--coral); font-size:15px; }
+  .venue address{ font-style:normal; color:var(--ink-soft); font-size:14px; margin:8px 0 16px; }
+  .btn{ display:inline-block; font-weight:600; font-size:13.5px; color:#151312; background:var(--lime); padding:10px 24px; border-radius:4px; text-decoration:none; }
+  .btn:hover{ filter:brightness(1.08); }
+
+  #itinerario{ padding:64px 0; }
+  .timeline{ margin-top:34px; position:relative; padding-left:26px; }
+  .timeline::before{ content:''; position:absolute; left:4px; top:6px; bottom:6px; width:1px; background:var(--line); }
+  .t-item{ position:relative; padding-bottom:26px; }
+  .t-item::before{ content:''; position:absolute; left:-26px; top:5px; width:9px; height:9px; border-radius:2px; background:var(--coral); }
+  .t-item .h{ font-family:var(--mono); color:var(--coral); font-size:14px; font-weight:500; }
+  .t-item .l{ font-family:var(--serif-display); font-weight:600; font-size:16.5px; margin-top:2px; }
+
+  .two-col{ display:grid; gap:16px; margin-top:18px; }
+  @media(min-width:560px){ .two-col{ grid-template-columns:1fr 1fr; } }
+  .info-card{ background:var(--paper-2); border:1px solid var(--line); padding:26px; text-align:center; border-radius:8px; }
+  .info-card h3{ font-size:19px; margin-bottom:8px; }
+  .info-card p{ font-size:14px; color:var(--ink-soft); }
+
+  #galeria{ padding:64px 0; text-align:center; }
+  .gal-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:28px; }
+  .gal-grid img{ width:100%; aspect-ratio:3/4; object-fit:cover; border-radius:6px; }
+  .gal-grid img:nth-child(2), .gal-grid img:nth-child(5){ aspect-ratio:1/1; }
+
+  #rsvp{ padding:64px 0; text-align:center; }
+  form{ margin-top:30px; display:flex; flex-direction:column; gap:14px; text-align:left; }
+  form label{ font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-soft); display:block; margin-bottom:6px; }
+  form input, form select, form textarea{ width:100%; font:inherit; font-size:15px; padding:12px 14px; border-radius:6px; border:1px solid var(--line); background:var(--paper); color:var(--ink); outline:none; }
+  form input:focus, form select:focus, form textarea:focus{ border-color:var(--coral); }
+  .radio-row{ display:flex; gap:10px; }
+  .radio-row label{ flex:1; border:1px solid var(--line); border-radius:6px; padding:12px; text-align:center; cursor:pointer; font-size:14px; color:var(--ink); text-transform:none; letter-spacing:0; font-family:var(--mono); }
+  .radio-row input{ display:none; }
+  .radio-row input:checked + span{ color:var(--coral); font-weight:600; }
+  form button{ margin-top:8px; font-family:var(--serif-display); font-weight:700; font-size:16px; background:var(--coral); color:#151312; border:none; padding:15px; border-radius:6px; cursor:pointer; }
+  #rsvp-ok{ display:none; margin-top:18px; color:var(--lime); }
+
+  footer{ padding:70px 0 50px; text-align:center; }
+  footer .amp{ font-family:var(--serif-display); color:var(--coral); font-size:34px; font-weight:800; }
+  footer .credit{ margin-top:40px; font-size:11px; letter-spacing:.1em; color:var(--ink-soft); opacity:.6; }
+
+  h2.section-title{ text-align:center; font-size:clamp(28px,7vw,38px); }
+</style>
+</head>
+<body>
+
+<div id="demo-bar">
+  <span><b>Demo</b> · Invitación de Cumpleaños / Evento — Invitaciones Digitales</span>
+  <a href="../index.html">← Ver todos los diseños</a>
+</div>
+
+<div id="envelope">
+  <div class="seal">30</div>
+  <div class="env-names">Cumple de Diego</div>
+  <div class="hint" id="guest-greeting" style="display:none; margin-top:-8px;"></div>
+  <button id="envelope-btn">Abrir invitación</button>
+  <div class="hint">Toca para continuar</div>
+</div>
+
+<main class="wrap">
+
+  <section id="hero">
+    <div class="date-tag">08 · 11 · 2026</div>
+    <h1>Cumple de <span>Diego</span></h1>
+    <div class="num">30</div>
+    <p class="quote">Cero excusas, toda la noche. Ven a celebrar conmigo.</p>
+  </section>
+
+  <section id="countdown" class="reveal">
+    <p class="eyebrow">Cuenta regresiva</p>
+    <div class="cd-grid">
+      <div class="cd-unit"><b id="cd-d">00</b><span>Días</span></div>
+      <div class="cd-unit"><b id="cd-h">00</b><span>Hrs</span></div>
+      <div class="cd-unit"><b id="cd-m">00</b><span>Min</span></div>
+      <div class="cd-unit"><b id="cd-s">00</b><span>Seg</span></div>
+    </div>
+  </section>
+
+  <section id="ubicacion" class="reveal" style="padding:64px 0;">
+    <h2 class="section-title">Dónde es la fiesta</h2>
+    <div class="rule"></div>
+    <div class="venue-grid">
+      <div class="card venue">
+        <p class="eyebrow">Sede</p>
+        <h3>Terraza Norte</h3>
+        <p class="time">21:00 h en adelante</p>
+        <address>Av. Central Poniente 510, Tuxtla Gutiérrez, Chis.</address>
+        <a class="btn" href="https://maps.google.com" target="_blank" rel="noopener">Ver ubicación</a>
+      </div>
+    </div>
+  </section>
+
+  <section id="itinerario" class="reveal">
+    <h2 class="section-title">Corre así</h2>
+    <div class="rule"></div>
+    <div class="timeline">
+      <div class="t-item"><div class="h">21:00</div><div class="l">Llegada y bienvenida</div></div>
+      <div class="t-item"><div class="h">22:00</div><div class="l">Brindis</div></div>
+      <div class="t-item"><div class="h">22:30</div><div class="l">DJ en vivo</div></div>
+      <div class="t-item"><div class="h">00:00</div><div class="l">Pastel</div></div>
+      <div class="t-item"><div class="h">00:30</div><div class="l">Barra libre</div></div>
+    </div>
+  </section>
+
+  <section style="padding:64px 0;" class="reveal">
+    <h2 class="section-title">Detalles</h2>
+    <div class="rule"></div>
+    <div class="two-col">
+      <div class="info-card">
+        <h3>Dress code</h3>
+        <p>Casual chic — nada de tenis</p>
+      </div>
+      <div class="info-card">
+        <h3>Regalo</h3>
+        <p>Tu presencia es el regalo. Si quieres traer algo, con una botella nos vemos.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="galeria" class="reveal">
+    <h2 class="section-title">Momentos</h2>
+    <div class="rule"></div>
+    <div class="gal-grid">
+      <img src="https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=400&q=70&auto=format&fit=crop" alt="Globos de colores">
+      <img src="https://images.unsplash.com/photo-1464349095431-e9a21285b5f3?w=400&q=70&auto=format&fit=crop" alt="Pastel de cumpleaños">
+      <img src="https://images.unsplash.com/photo-1467810563316-b5476525c0f9?w=400&q=70&auto=format&fit=crop" alt="Luces de bengala">
+      <img src="https://images.unsplash.com/photo-1513151233558-d860c5398176?w=400&q=70&auto=format&fit=crop" alt="Confeti">
+      <img src="https://images.unsplash.com/photo-1464349153735-7db50ed83c84?w=400&q=70&auto=format&fit=crop" alt="Velas de cumpleaños">
+      <img src="https://images.unsplash.com/photo-1527529482837-4698179dc6ce?w=400&q=70&auto=format&fit=crop" alt="Amigos brindando">
+    </div>
+  </section>
+
+  <section id="rsvp" class="reveal">
+    <h2 class="section-title">Confirma tu asistencia</h2>
+    <div class="rule"></div>
+    <p style="color:var(--ink-soft); font-size:14.5px; margin-top:10px;">Antes del 1 de noviembre</p>
+    <form id="rsvp-form">
+      <div><label for="nombre">Nombre completo</label><input id="nombre" required placeholder="¿Quién confirma?"></div>
+      <div>
+        <label>¿Asistirás?</label>
+        <div class="radio-row">
+          <label><input type="radio" name="asiste" value="si" checked><span>Sí, ahí estaré</span></label>
+          <label><input type="radio" name="asiste" value="no"><span>No podré ir</span></label>
+        </div>
+      </div>
+      <div><label for="msg">Mensaje (opcional)</label><textarea id="msg" rows="3" placeholder="Un mensaje para Diego"></textarea></div>
+      <div><label for="restricciones">Alergias o restricciones alimenticias (opcional)</label><input id="restricciones" placeholder="Ej. vegetariano, sin gluten"></div>
+      <button type="submit">Enviar confirmación</button>
+    </form>
+    <p id="rsvp-ok">¡Gracias! Tu confirmación fue registrada.</p>
+  </section>
+
+  <footer class="reveal">
+    <div class="amp">D · 30</div>
+    <p style="margin-top:10px; color:var(--ink-soft);">8 de noviembre, 2026</p>
+    <p class="credit">Invitación digital · Invitaciones Digitales</p>
+  </footer>
+
+</main>
+
+<script>
+  document.getElementById('envelope-btn').addEventListener('click', () => {
+    document.getElementById('envelope').classList.add('open');
+    document.body.style.overflow = 'auto';
+  });
+  document.body.style.overflow = 'hidden';
+
+  const WEDDING_DATE = new Date('2026-11-08T21:00:00-06:00').getTime();
+  function tick(){
+    const diff = WEDDING_DATE - Date.now();
+    const d = Math.max(0, Math.floor(diff / 86400000));
+    const h = Math.max(0, Math.floor((diff % 86400000) / 3600000));
+    const m = Math.max(0, Math.floor((diff % 3600000) / 60000));
+    const s = Math.max(0, Math.floor((diff % 60000) / 1000));
+    document.getElementById('cd-d').textContent = String(d).padStart(2,'0');
+    document.getElementById('cd-h').textContent = String(h).padStart(2,'0');
+    document.getElementById('cd-m').textContent = String(m).padStart(2,'0');
+    document.getElementById('cd-s').textContent = String(s).padStart(2,'0');
+  }
+  tick();
+  setInterval(tick, 1000);
+
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('show'); });
+  }, { threshold: 0.15 });
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+  // invitado personalizado — el link trae ?event=...&g=slug&n=Nombre (lo genera el equipo con n8n, opcional)
+  const params = new URLSearchParams(location.search);
+  const guestSlug = params.get('g');
+  const guestName = params.get('n');
+  const eventSlug = params.get('event');
+  if (guestName){
+    const greeting = document.getElementById('guest-greeting');
+    greeting.textContent = `Esta invitación es para ${guestName}`;
+    greeting.style.display = 'block';
+    const nombreInput = document.getElementById('nombre');
+    nombreInput.value = guestName;
+    nombreInput.readOnly = true;
+  }
+
+  // RSVP — si el link trae invitado (g), se guarda en la base vía n8n; si no, es solo demo local
+  const RSVP_WEBHOOK = 'https://n8nambarrojo.ambarrojostudios.cloud/webhook/invitaciones-rsvp';
+  document.getElementById('rsvp-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const asiste = e.target.querySelector('input[name="asiste"]:checked').value;
+    const mensaje = document.getElementById('msg').value;
+    const restricciones = document.getElementById('restricciones').value;
+    if (guestSlug && eventSlug){
+      try {
+        await fetch(RSVP_WEBHOOK, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ slug: guestSlug, event: eventSlug, asiste, mensaje, restricciones })
+        });
+      } catch (err) {
+        // ponytail: sin reintentos ni cola offline — si falla la red, el invitado puede reenviar el formulario
+      }
+    }
+    document.getElementById('rsvp-ok').style.display = 'block';
+    e.target.reset();
+  });
+</script>
+
+</body>
+</html>

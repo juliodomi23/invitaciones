@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tu panel de confirmaciones — Invitaciones Digitales</title>
+<meta name="robots" content="noindex, nofollow">
+
+<!--
+  PANEL DEL CLIENTE — link privado, uno por evento: mi-panel.html?event=<event_slug>
+  Se entrega a la novia/quinceañera/familia junto con el link de su invitación, para que vea
+  en vivo quién ha confirmado sin tener que pedírnoslo a nosotros. Consulta el mismo webhook
+  de n8n que admin.html ("Invitaciones — Lista de Invitados"), filtrado a su propio evento.
+-->
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Quicksand:wght@400;500;600;700&display=swap');
+
+  :root{
+    --ink:#3D2B1F; --ink-soft:#8A7460; --paper:#FBF3E6; --panel:#FFFCF6;
+    --ruby:#A32B3F; --ruby-soft:#F5DEE1; --gold:#C68A2E; --gold-soft:#F6E8CC; --line:#E9DCC5;
+    --serif:'Fraunces', 'Times New Roman', serif; --sans:'Quicksand', system-ui, sans-serif;
+  }
+  *{ margin:0; padding:0; box-sizing:border-box; }
+  body{ background:var(--paper); color:var(--ink); font-family:var(--sans); font-weight:500; padding:40px 20px 70px; }
+  .wrap{ max-width:820px; margin:0 auto; }
+  h1{ font-family:var(--serif); font-weight:600; font-size:30px; }
+  p.hint{ color:var(--ink-soft); margin-top:8px; font-size:15px; }
+
+  .summary{ display:grid; grid-template-columns:repeat(2,1fr); gap:14px; margin:28px 0; }
+  @media(min-width:560px){ .summary{ grid-template-columns:repeat(4,1fr); } }
+  .summary .card{ background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:18px 20px; text-align:center; }
+  .summary .card.total{ background:var(--ruby); border-color:var(--ruby); }
+  .summary .card.total b, .summary .card.total span{ color:#fff; }
+  .summary b{ display:block; font-family:var(--serif); font-size:30px; color:var(--gold); }
+  .summary span{ font-size:12.5px; color:var(--ink-soft); font-weight:600; }
+
+  table{ width:100%; border-collapse:collapse; background:var(--panel); border:1px solid var(--line); border-radius:14px; overflow:hidden; }
+  th, td{ text-align:left; padding:12px 14px; border-bottom:1px solid var(--line); font-size:14.5px; }
+  th{ background:var(--gold-soft); font-size:11.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-soft); }
+  tr:last-child td{ border-bottom:none; }
+  .badge{ display:inline-block; padding:4px 12px; border-radius:99px; font-size:12px; font-weight:700; }
+  .badge.confirmado{ background:#E4EEDD; color:#4B6B3F; }
+  .badge.no_asiste{ background:var(--ruby-soft); color:var(--ruby); }
+  .badge.pendiente{ background:var(--gold-soft); color:var(--gold); }
+
+  #estado{ color:var(--ink-soft); font-size:15px; margin:14px 0; }
+  #vacio{ display:none; color:var(--ink-soft); padding:30px; text-align:center; background:var(--panel); border:1px solid var(--line); border-radius:14px; }
+  #falta-evento{ display:none; color:var(--ink-soft); padding:30px; text-align:center; }
+  footer{ margin-top:40px; text-align:center; font-size:12.5px; color:var(--ink-soft); }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <h1 id="titulo">Tu panel de confirmaciones</h1>
+  <p class="hint">Se actualiza solo, cada 30 segundos — no necesitas recargar la página ni escribirnos para saber quién ya confirmó.</p>
+
+  <div id="falta-evento">
+    <p>Este link no tiene evento asignado. Pide a Invitaciones Digitales tu link personal.</p>
+  </div>
+
+  <div id="contenido" style="display:none">
+    <div class="summary" id="resumen"></div>
+    <p id="estado"></p>
+    <table id="tabla" style="display:none">
+      <thead>
+        <tr><th>Invitado</th><th>Estado</th><th>Dedicatoria</th><th>Alergias / restricciones</th></tr>
+      </thead>
+      <tbody id="filas"></tbody>
+    </table>
+    <p id="vacio">Todavía nadie ha confirmado — en cuanto alguien responda, aparece aquí solo.</p>
+  </div>
+
+  <footer>Invitaciones Digitales · panel privado, no lo compartas fuera de tu familia</footer>
+</div>
+
+<script>
+  const LIST_WEBHOOK = 'https://n8nambarrojo.ambarrojostudios.cloud/webhook/invitaciones-lista';
+  const STATUS_LABEL = { confirmado: 'Confirmó', no_asiste: 'No asiste', pendiente: 'Pendiente' };
+  const event = new URLSearchParams(location.search).get('event');
+
+  if (!event){
+    document.getElementById('falta-evento').style.display = 'block';
+  } else {
+    document.getElementById('contenido').style.display = 'block';
+    cargar();
+    setInterval(cargar, 30000);
+  }
+
+  async function cargar(){
+    const estadoEl = document.getElementById('estado');
+    const tabla = document.getElementById('tabla');
+    const vacio = document.getElementById('vacio');
+
+    try {
+      const url = new URL(LIST_WEBHOOK);
+      url.searchParams.set('event', event);
+      const res = await fetch(url);
+      const guests = (await res.json()).guests;
+
+      const counts = { confirmado: 0, no_asiste: 0, pendiente: 0 };
+      guests.forEach(g => { counts[g.status] = (counts[g.status] || 0) + 1; });
+      document.getElementById('resumen').innerHTML = `
+        <div class="card total"><b>${counts.confirmado}</b><span>Van a ir</span></div>
+        <div class="card"><b>${guests.length}</b><span>Invitados</span></div>
+        <div class="card"><b>${counts.no_asiste}</b><span>No van</span></div>
+        <div class="card"><b>${counts.pendiente}</b><span>Sin responder</span></div>
+      `;
+
+      if (guests.length === 0){
+        tabla.style.display = 'none';
+        vacio.style.display = 'block';
+        estadoEl.textContent = '';
+        return;
+      }
+
+      vacio.style.display = 'none';
+      document.getElementById('filas').innerHTML = guests.map(g => `
+        <tr>
+          <td>${g.name}</td>
+          <td><span class="badge ${g.status}">${STATUS_LABEL[g.status] || g.status}</span></td>
+          <td>${g.message ? g.message : '—'}</td>
+          <td>${g.dietary ? g.dietary : '—'}</td>
+        </tr>
+      `).join('');
+      tabla.style.display = 'table';
+      estadoEl.textContent = '';
+    } catch (err){
+      estadoEl.textContent = 'No se pudo actualizar en este momento — vuelve a intentar en un rato.';
+    }
+  }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Demo: Invitación Digital de Boda — Valentina &amp; Mateo | Invitaciones Digitales</title>
+<meta name="description" content="Demo funcional de invitación digital de boda: cuenta regresiva, ubicación, itinerario, padrinos, mesa de regalos y confirmación de asistencia (RSVP), lista para adaptar a tu evento.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://invitaciones.ambarrojostudios.com/demos/boda.html">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="es_MX">
+<meta property="og:site_name" content="Invitaciones Digitales · Ámbar Rojo Studios">
+<meta property="og:title" content="Demo: Invitación Digital de Boda">
+<meta property="og:description" content="Cuenta regresiva, ubicación, itinerario, padrinos y RSVP — así se ve una invitación digital de boda hecha a la medida.">
+<meta property="og:image" content="https://images.unsplash.com/photo-1519657337289-077653f724ed?w=1200&q=75&auto=format&fit=crop">
+<meta property="og:url" content="https://invitaciones.ambarrojostudios.com/demos/boda.html">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Demo: Invitación Digital de Boda">
+<meta name="twitter:description" content="Cuenta regresiva, itinerario, padrinos y RSVP — invitación digital de boda a la medida.">
+<meta name="twitter:image" content="https://images.unsplash.com/photo-1519657337289-077653f724ed?w=1200&q=75&auto=format&fit=crop">
+<meta name="theme-color" content="#6B2737">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://images.unsplash.com">
+
+<!--
+  PLANTILLA DE INVITACIÓN DIGITAL — Invitaciones Digitales
+  Para personalizar por cliente, reemplazar:
+   - Nombres: "Valentina" / "Mateo" (buscar y reemplazar en todo el archivo)
+   - Fecha: 14.02.27 y el bloque data-date del countdown (línea ~490)
+   - Direcciones, horarios e itinerario (sección #ubicacion e #itinerario)
+   - Padres/padrinos (sección #familia)
+   - Fotos: hoy son de Unsplash de referencia — reemplazar por las fotos reales de los novios
+   - Enlace de RSVP: si el link trae ?event=&g=&n= (invitado real), el RSVP se guarda en Neon
+     vía el webhook de n8n "Invitaciones — RSVP". Sin esos parámetros, el RSVP es solo local (demo).
+     Los links por invitado se generan con el workflow de n8n "Invitaciones — Generar Links de Invitados".
+-->
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;1,6..96,400;1,6..96,500&family=Newsreader:ital,wght@0,300;0,400;0,500;1,400&display=swap');
+
+  :root{
+    --paper:#FAF3EA;
+    --paper-2:#F3E9DB;
+    --ink:#2B2420;
+    --ink-soft:#5C5148;
+    --wine:#6B2737;
+    --wine-soft:#EFDCDF;
+    --sage:#7C8B6F;
+    --gold:#B08D57;
+    --line:#DDCEB8;
+    --serif-display:'Bodoni Moda', 'Times New Roman', serif;
+    --serif-body:'Newsreader', Georgia, serif;
+  }
+
+  *{ margin:0; padding:0; box-sizing:border-box; }
+  html{ scroll-behavior:smooth; }
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--serif-body);
+    font-size:17px;
+    line-height:1.6;
+    overflow-x:hidden;
+    padding-top:38px;
+  }
+
+  ::selection{ background:var(--wine); color:var(--paper); }
+
+  .wrap{ max-width:640px; margin:0 auto; padding:0 28px; }
+
+  /* ---------- textura de fondo ---------- */
+  body::before{
+    content:'';
+    position:fixed; inset:0; z-index:0; pointer-events:none;
+    background-image:
+      radial-gradient(circle at 12% 8%, rgba(107,39,55,.06), transparent 40%),
+      radial-gradient(circle at 88% 92%, rgba(124,139,111,.08), transparent 45%);
+  }
+
+  section{ position:relative; z-index:1; }
+
+  h1,h2,h3{ font-family:var(--serif-display); font-weight:400; }
+
+  .eyebrow{
+    font-family:var(--serif-body); font-style:italic; font-size:13px;
+    letter-spacing:.24em; text-transform:uppercase; color:var(--wine);
+  }
+
+  .rule{ width:44px; height:1px; background:var(--gold); margin:18px auto; }
+
+  /* ---------- overlay de apertura ---------- */
+  #envelope{
+    position:fixed; inset:0; z-index:50;
+    background:
+      linear-gradient(rgba(43,15,23,.55), rgba(43,15,23,.72)),
+      url('https://images.unsplash.com/photo-1519657337289-077653f724ed?w=1200&q=70&auto=format&fit=crop') center/cover;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    color:var(--paper); text-align:center; gap:22px;
+    transition:transform .9s cubic-bezier(.65,0,.35,1), opacity .7s ease;
+  }
+  #envelope.open{ transform:translateY(-100%); opacity:0; pointer-events:none; }
+  #envelope .seal{
+    width:76px; height:76px; border-radius:50%; border:1px solid rgba(250,243,234,.5);
+    display:flex; align-items:center; justify-content:center;
+    font-family:var(--serif-display); font-size:22px; letter-spacing:.05em;
+  }
+  #envelope .env-names{ font-family:var(--serif-display); font-style:italic; font-size:15px; letter-spacing:.02em; opacity:.85; }
+  #envelope button{
+    font-family:var(--serif-body); font-style:italic; font-size:15px; color:var(--wine);
+    background:var(--paper); border:none; padding:13px 34px; border-radius:99px;
+    cursor:pointer; letter-spacing:.04em;
+  }
+  #envelope .hint{ font-size:11px; letter-spacing:.18em; text-transform:uppercase; opacity:.55; }
+
+  /* ---------- reveal on scroll (nativo, sin libs) ---------- */
+  .reveal{ opacity:0; transform:translateY(22px); transition:opacity .8s ease, transform .8s ease; }
+  .reveal.show{ opacity:1; transform:none; }
+
+  /* stagger de la galería al aparecer */
+  .gal-grid img{ opacity:0; transform:scale(.94); transition:opacity .6s ease, transform .6s ease; }
+  .reveal.show .gal-grid img{ opacity:1; transform:none; }
+  .gal-grid img:nth-child(1){ transition-delay:.05s; } .gal-grid img:nth-child(2){ transition-delay:.1s; }
+  .gal-grid img:nth-child(3){ transition-delay:.15s; } .gal-grid img:nth-child(4){ transition-delay:.2s; }
+  .gal-grid img:nth-child(5){ transition-delay:.25s; } .gal-grid img:nth-child(6){ transition-delay:.3s; }
+
+  /* pulso sutil en el botón de RSVP */
+  form button{ animation:pulse-rsvp 2.8s ease-in-out infinite; }
+  @keyframes pulse-rsvp{ 0%,100%{ box-shadow:0 0 0 0 rgba(107,39,55,.35); } 50%{ box-shadow:0 0 0 9px rgba(107,39,55,0); } }
+
+  @media (prefers-reduced-motion: reduce){
+    .gal-grid img{ opacity:1; transform:none; transition:none; }
+    form button{ animation:none; }
+  }
+
+  /* ---------- hero ---------- */
+  #hero{
+    min-height:100svh; display:flex; flex-direction:column; align-items:center; justify-content:flex-end;
+    text-align:center; padding:80px 28px 64px;
+    width:100vw; margin-left:calc(50% - 50vw); margin-right:calc(50% - 50vw);
+    background:
+      linear-gradient(to bottom, rgba(43,15,23,.15) 0%, rgba(43,15,23,.25) 55%, rgba(20,10,14,.88) 100%),
+      url('https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=1400&q=70&auto=format&fit=crop') center 30%/cover;
+    color:#fff;
+  }
+  #hero .date-tag{ font-size:13px; letter-spacing:.3em; color:#EADFD3; margin-bottom:22px; }
+  #hero h1{ font-size:clamp(44px,11vw,78px); line-height:1.02; }
+  #hero h1 .amp{ display:block; font-style:italic; color:var(--gold); font-size:.55em; margin:6px 0; }
+  #hero p.quote{ font-style:italic; color:#EADFD3; max-width:380px; margin-top:22px; font-size:16px; }
+
+  /* ---------- countdown ---------- */
+  #countdown{ padding:64px 0; text-align:center; }
+  .cd-grid{ display:flex; justify-content:center; gap:clamp(10px,4vw,28px); margin-top:24px; }
+  .cd-unit{ min-width:64px; }
+  .cd-unit b{ display:block; font-family:var(--serif-display); font-size:clamp(30px,6vw,44px); color:var(--wine); line-height:1; }
+  .cd-unit span{ display:block; font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--ink-soft); margin-top:8px; }
+
+  /* ---------- ubicaciones ---------- */
+  .card{
+    background:var(--paper-2); border:1px solid var(--line); border-radius:4px;
+    padding:30px 26px; margin-top:18px;
+  }
+  .venue-grid{ display:grid; gap:18px; margin-top:8px; }
+  .venue{ text-align:center; }
+  .venue h3{ font-size:24px; margin:6px 0 4px; }
+  .venue .time{ font-family:var(--serif-body); font-style:italic; color:var(--wine); font-size:15px; }
+  .venue address{ font-style:normal; color:var(--ink-soft); font-size:14.5px; margin:8px 0 16px; }
+  .btn{
+    display:inline-block; font-family:var(--serif-body); font-style:italic; font-size:14px;
+    color:var(--wine); border:1px solid var(--wine); padding:10px 24px; border-radius:99px;
+    text-decoration:none; transition:background .2s ease, color .2s ease;
+  }
+  .btn:hover{ background:var(--wine); color:var(--paper); }
+
+  /* ---------- itinerario ---------- */
+  #itinerario{ padding:64px 0; }
+  .timeline{ margin-top:34px; position:relative; padding-left:26px; }
+  .timeline::before{ content:''; position:absolute; left:4px; top:6px; bottom:6px; width:1px; background:var(--line); }
+  .t-item{ position:relative; padding-bottom:26px; }
+  .t-item::before{ content:''; position:absolute; left:-26px; top:5px; width:9px; height:9px; border-radius:50%; background:var(--wine); }
+  .t-item .h{ font-family:var(--serif-display); font-style:italic; color:var(--wine); font-size:15px; }
+  .t-item .l{ font-size:15.5px; margin-top:2px; }
+
+  /* ---------- familia ---------- */
+  #familia{ text-align:center; padding:64px 0; }
+  .familia-grid{ display:grid; grid-template-columns:1fr 1fr; gap:30px; margin-top:32px; }
+  .familia-grid h4{ font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:var(--sage); margin-bottom:10px; }
+  .familia-grid p{ font-size:15px; }
+
+  /* ---------- vestimenta / regalo ---------- */
+  .two-col{ display:grid; gap:16px; margin-top:18px; }
+  @media(min-width:560px){ .two-col{ grid-template-columns:1fr 1fr; } }
+  .info-card{ background:var(--paper-2); border:1px solid var(--line); padding:26px; text-align:center; border-radius:4px; }
+  .info-card h3{ font-size:20px; margin-bottom:8px; }
+  .info-card p{ font-size:14.5px; color:var(--ink-soft); }
+  .swatches{ display:flex; justify-content:center; gap:8px; margin-top:14px; }
+  .swatch{ width:22px; height:22px; border-radius:50%; border:1px solid var(--line); }
+
+  /* ---------- galería ---------- */
+  #galeria{ padding:64px 0; text-align:center; }
+  .gal-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:28px; }
+  .gal-grid img{ width:100%; aspect-ratio:3/4; object-fit:cover; border-radius:3px; }
+  .gal-grid img:nth-child(2), .gal-grid img:nth-child(5){ aspect-ratio:1/1; }
+
+  /* ---------- menu ---------- */
+  .menu-list{ margin-top:24px; display:flex; flex-direction:column; gap:18px; }
+  .menu-list .row .k{ font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:var(--sage); }
+  .menu-list .row .v{ font-size:16.5px; margin-top:3px; }
+
+  /* ---------- rsvp ---------- */
+  #rsvp{ padding:64px 0; text-align:center; }
+  form{ margin-top:30px; display:flex; flex-direction:column; gap:14px; text-align:left; }
+  form label{ font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-soft); display:block; margin-bottom:6px; }
+  form input, form select, form textarea{
+    width:100%; font:inherit; font-size:15px; padding:12px 14px; border-radius:3px;
+    border:1px solid var(--line); background:var(--paper); color:var(--ink); outline:none;
+  }
+  form input:focus, form select:focus, form textarea:focus{ border-color:var(--wine); }
+  .radio-row{ display:flex; gap:10px; }
+  .radio-row label{ flex:1; border:1px solid var(--line); border-radius:3px; padding:12px; text-align:center; cursor:pointer; font-size:14px; color:var(--ink); text-transform:none; letter-spacing:0; }
+  .radio-row input{ display:none; }
+  .radio-row input:checked + span{ color:var(--wine); font-weight:600; }
+  form button{
+    margin-top:8px; font-family:var(--serif-body); font-style:italic; font-size:16px;
+    background:var(--wine); color:var(--paper); border:none; padding:15px; border-radius:99px; cursor:pointer;
+  }
+  #rsvp-ok{ display:none; margin-top:18px; color:var(--sage); font-style:italic; }
+
+  /* ---------- footer ---------- */
+  footer{ padding:70px 0 50px; text-align:center; }
+  footer .amp{ font-family:var(--serif-display); font-style:italic; color:var(--wine); font-size:34px; }
+  footer .credit{ margin-top:40px; font-size:11px; letter-spacing:.1em; color:var(--ink-soft); opacity:.6; }
+
+  h2.section-title{ text-align:center; font-size:clamp(30px,7vw,42px); }
+
+  /* ---------- barra de demo ---------- */
+  #demo-bar{
+    position:fixed; top:0; left:0; right:0; z-index:60;
+    background:var(--ink); color:var(--paper);
+    display:flex; align-items:center; justify-content:center; gap:14px;
+    font-family:var(--serif-body); font-size:13px; padding:9px 14px; text-align:center;
+  }
+  #demo-bar a{ color:var(--paper); text-decoration:underline; text-underline-offset:3px; }
+  #demo-bar b{ color:var(--gold); font-style:italic; }
+</style>
+</head>
+<body>
+
+<div id="demo-bar">
+  <span><b>Demo</b> · Invitación de Boda — Invitaciones Digitales</span>
+  <a href="../index.html">← Ver todos los diseños</a>
+</div>
+
+<div id="envelope">
+  <div class="seal">V·M</div>
+  <div class="env-names">Valentina &amp; Mateo</div>
+  <div class="hint" id="guest-greeting" style="display:none; margin-top:-8px;"></div>
+  <button id="envelope-btn">Abrir invitación</button>
+  <div class="hint">Toca para continuar</div>
+</div>
+
+<main class="wrap">
+
+  <section id="hero">
+    <div class="date-tag">14 · 02 · 2027</div>
+    <h1>Valentina<span class="amp">&amp;</span>Mateo</h1>
+    <p class="quote">"En el momento que nos tomamos de la mano, comprendimos que el resto de la historia ya estaba escrito."</p>
+  </section>
+
+  <section id="countdown" class="reveal">
+    <p class="eyebrow">Falta muy poco</p>
+    <div class="cd-grid">
+      <div class="cd-unit"><b id="cd-d">00</b><span>Días</span></div>
+      <div class="cd-unit"><b id="cd-h">00</b><span>Hrs</span></div>
+      <div class="cd-unit"><b id="cd-m">00</b><span>Min</span></div>
+      <div class="cd-unit"><b id="cd-s">00</b><span>Seg</span></div>
+    </div>
+  </section>
+
+  <section id="ubicacion" class="reveal" style="padding:64px 0;">
+    <h2 class="section-title">Dónde celebramos</h2>
+    <div class="rule"></div>
+    <div class="venue-grid">
+      <div class="card venue">
+        <p class="eyebrow">Ceremonia</p>
+        <h3>Parroquia San Rafael</h3>
+        <p class="time">17:00 h</p>
+        <address>Av. de las Rosas 214, Tuxtla Gutiérrez, Chis.</address>
+        <a class="btn" href="https://maps.google.com" target="_blank" rel="noopener">Ver ubicación</a>
+      </div>
+      <div class="card venue">
+        <p class="eyebrow">Recepción</p>
+        <h3>Hacienda Los Cedros</h3>
+        <p class="time">19:00 h</p>
+        <address>Km 8 Carretera a San Cristóbal, Chis.</address>
+        <a class="btn" href="https://maps.google.com" target="_blank" rel="noopener">Ver ubicación</a>
+      </div>
+    </div>
+  </section>
+
+  <section id="itinerario" class="reveal">
+    <h2 class="section-title">Itinerario</h2>
+    <div class="rule"></div>
+    <div class="timeline">
+      <div class="t-item"><div class="h">17:00</div><div class="l">Ceremonia religiosa</div></div>
+      <div class="t-item"><div class="h">19:00</div><div class="l">Recepción de invitados</div></div>
+      <div class="t-item"><div class="h">20:00</div><div class="l">Cena</div></div>
+      <div class="t-item"><div class="h">21:30</div><div class="l">Brindis y pastel</div></div>
+      <div class="t-item"><div class="h">22:00</div><div class="l">Primer baile</div></div>
+      <div class="t-item"><div class="h">22:30</div><div class="l">Pista abierta</div></div>
+    </div>
+  </section>
+
+  <section id="familia" class="reveal">
+    <h2 class="section-title">Con la bendición de</h2>
+    <div class="rule"></div>
+    <div class="familia-grid">
+      <div>
+        <h4>Padres de la novia</h4>
+        <p>Sra. Rosa Méndez<br>Sr. Ignacio Torres</p>
+      </div>
+      <div>
+        <h4>Padres del novio</h4>
+        <p>Sra. Adriana Solís<br>Sr. Ernesto Ramírez</p>
+      </div>
+      <div>
+        <h4>Padrinos de velación</h4>
+        <p>Carmen &amp; Rodrigo Paz</p>
+      </div>
+      <div>
+        <h4>Padrinos de anillos</h4>
+        <p>Diana &amp; Luis Cabrera</p>
+      </div>
+    </div>
+  </section>
+
+  <section style="padding:64px 0;" class="reveal">
+    <h2 class="section-title">Detalles</h2>
+    <div class="rule"></div>
+    <div class="two-col">
+      <div class="info-card">
+        <h3>Código de vestimenta</h3>
+        <p>Formal — tonos tierra</p>
+        <div class="swatches">
+          <div class="swatch" style="background:#6B2737"></div>
+          <div class="swatch" style="background:#B08D57"></div>
+          <div class="swatch" style="background:#7C8B6F"></div>
+          <div class="swatch" style="background:#2B2420"></div>
+        </div>
+      </div>
+      <div class="info-card">
+        <h3>Mesa de regalos</h3>
+        <p>Tu presencia es nuestro mejor regalo. Si deseas obsequiarnos algo, aceptamos con cariño una lluvia de sobres.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="galeria" class="reveal">
+    <h2 class="section-title">Nuestros momentos</h2>
+    <div class="rule"></div>
+    <div class="gal-grid">
+      <img src="https://images.unsplash.com/photo-1519741497674-611481863552?w=400&q=70&auto=format&fit=crop" alt="Ramo de novia">
+      <img src="https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?w=400&q=70&auto=format&fit=crop" alt="Manos con anillos">
+      <img src="https://images.unsplash.com/photo-1606800052052-a08af7148866?w=400&q=70&auto=format&fit=crop" alt="Anillos de boda">
+      <img src="https://images.unsplash.com/photo-1520854221256-17451cc331bf?w=400&q=70&auto=format&fit=crop" alt="Pareja tomados de la mano">
+      <img src="https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=400&q=70&auto=format&fit=crop" alt="Confeti de celebración">
+      <img src="https://images.unsplash.com/photo-1519657337289-077653f724ed?w=400&q=70&auto=format&fit=crop" alt="Vestido de novia">
+    </div>
+  </section>
+
+  <section style="padding:64px 0;" class="reveal">
+    <h2 class="section-title">Menú</h2>
+    <div class="rule"></div>
+    <div class="menu-list">
+      <div class="row"><div class="k">Entrada</div><div class="v">Ensalada de betabel con queso de cabra</div></div>
+      <div class="row"><div class="k">Plato fuerte</div><div class="v">Filete de res al vino tinto, puré de papa y espárragos</div></div>
+      <div class="row"><div class="k">Postre</div><div class="v">Tarta de limón con merengue</div></div>
+    </div>
+  </section>
+
+  <section id="rsvp" class="reveal">
+    <h2 class="section-title">Confirma tu asistencia</h2>
+    <div class="rule"></div>
+    <p style="color:var(--ink-soft); font-size:15px; margin-top:10px;">Antes del 1 de enero de 2027</p>
+    <form id="rsvp-form">
+      <div>
+        <label for="nombre">Nombre completo</label>
+        <input id="nombre" required placeholder="¿Quién confirma?">
+      </div>
+      <div>
+        <label>¿Asistirás?</label>
+        <div class="radio-row">
+          <label><input type="radio" name="asiste" value="si" checked><span>Sí, ahí estaré</span></label>
+          <label><input type="radio" name="asiste" value="no"><span>No podré ir</span></label>
+        </div>
+      </div>
+      <div>
+        <label for="msg">Dedicatoria (opcional)</label>
+        <textarea id="msg" rows="3" placeholder="Un mensaje para los novios"></textarea>
+      </div>
+      <div>
+        <label for="restricciones">Alergias o restricciones alimenticias (opcional)</label>
+        <input id="restricciones" placeholder="Ej. vegetariano, sin gluten">
+      </div>
+      <button type="submit">Enviar confirmación</button>
+    </form>
+    <p id="rsvp-ok">¡Gracias! Tu confirmación fue registrada.</p>
+  </section>
+
+  <footer class="reveal">
+    <div class="amp">V &amp; M</div>
+    <p style="margin-top:10px; font-style:italic; color:var(--ink-soft);">14 de febrero, 2027</p>
+    <p class="credit">Invitación digital · Invitaciones Digitales</p>
+  </footer>
+
+</main>
+
+<script>
+  // apertura tipo sobre
+  document.getElementById('envelope-btn').addEventListener('click', () => {
+    document.getElementById('envelope').classList.add('open');
+    document.body.style.overflow = 'auto';
+  });
+  document.body.style.overflow = 'hidden';
+
+  // countdown — ponytail: fecha fija de ejemplo, cambiar al personalizar
+  const WEDDING_DATE = new Date('2027-02-14T17:00:00-06:00').getTime();
+  function tick(){
+    const diff = WEDDING_DATE - Date.now();
+    const d = Math.max(0, Math.floor(diff / 86400000));
+    const h = Math.max(0, Math.floor((diff % 86400000) / 3600000));
+    const m = Math.max(0, Math.floor((diff % 3600000) / 60000));
+    const s = Math.max(0, Math.floor((diff % 60000) / 1000));
+    document.getElementById('cd-d').textContent = String(d).padStart(2,'0');
+    document.getElementById('cd-h').textContent = String(h).padStart(2,'0');
+    document.getElementById('cd-m').textContent = String(m).padStart(2,'0');
+    document.getElementById('cd-s').textContent = String(s).padStart(2,'0');
+  }
+  tick();
+  setInterval(tick, 1000);
+
+  // reveal on scroll — nativo, sin librerías
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('show'); });
+  }, { threshold: 0.15 });
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+  // invitado personalizado — el link trae ?event=...&g=slug&n=Nombre (lo genera el equipo con n8n)
+  const params = new URLSearchParams(location.search);
+  const guestSlug = params.get('g');
+  const guestName = params.get('n');
+  const eventSlug = params.get('event');
+  if (guestName){
+    const greeting = document.getElementById('guest-greeting');
+    greeting.textContent = `Esta invitación es para ${guestName}`;
+    greeting.style.display = 'block';
+    const nombreInput = document.getElementById('nombre');
+    nombreInput.value = guestName;
+    nombreInput.readOnly = true;
+  }
+
+  // RSVP — si el link trae invitado (g), se guarda en la base vía n8n; si no, es solo demo local
+  const RSVP_WEBHOOK = 'https://n8nambarrojo.ambarrojostudios.cloud/webhook/invitaciones-rsvp';
+  document.getElementById('rsvp-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const asiste = e.target.querySelector('input[name="asiste"]:checked').value;
+    const mensaje = document.getElementById('msg').value;
+    const restricciones = document.getElementById('restricciones').value;
+    if (guestSlug && eventSlug){
+      try {
+        await fetch(RSVP_WEBHOOK, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ slug: guestSlug, event: eventSlug, asiste, mensaje, restricciones })
+        });
+      } catch (err) {
+        // ponytail: sin reintentos ni cola offline — si falla la red, el invitado puede reenviar el formulario
+      }
+    }
+    document.getElementById('rsvp-ok').style.display = 'block';
+    e.target.reset();
+  });
+</script>
+
+</body>
+</html>
