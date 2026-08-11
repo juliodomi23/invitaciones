@@ -10,6 +10,12 @@
   PANEL INTERNO — no es para clientes ni invitados, es para que el equipo vea quién confirmó.
   Consulta el workflow de n8n "Invitaciones — Lista de Invitados" (webhook GET).
   Deja el campo de evento vacío para ver todos los eventos juntos.
+
+  SEGURIDAD: ver todos los eventos juntos (evento vacío) requiere API_KEY — es la única
+  forma de listar los invitados de todos los clientes a la vez, así que esta página no es
+  para compartir. Los clientes usan mi-panel.html, que solo necesita el slug de su evento
+  (ese webhook no exige key cuando ya se manda un evento específico).
+  Si cambias la clave aquí, cámbiala también en el workflow de n8n (nodo "Preparar filtro").
 -->
 
 <style>
@@ -67,6 +73,7 @@
 
 <script>
   const LIST_WEBHOOK = 'https://n8nambarrojo.ambarrojostudios.cloud/webhook/invitaciones-lista';
+  const API_KEY = '4f60a1bb2d4dee4a373f2b45c3952363';
   const STATUS_LABEL = { confirmado: 'Confirmó', no_asiste: 'No asiste', pendiente: 'Pendiente' };
 
   async function cargar(){
@@ -81,6 +88,7 @@
     try {
       const url = new URL(LIST_WEBHOOK);
       if (evento) url.searchParams.set('event', evento);
+      url.searchParams.set('key', API_KEY);
       const res = await fetch(url);
       const guests = (await res.json()).guests;
 

@@ -1,27 +1,42 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://invitaciones.ambarrojostudios.com/</loc>
+    <loc>https://celeclick.com/</loc>
     <changefreq>monthly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://invitaciones.ambarrojostudios.com/demos/boda.html</loc>
+    <loc>https://celeclick.com/demos/boda.html</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://invitaciones.ambarrojostudios.com/demos/xv-anos.html</loc>
+    <loc>https://celeclick.com/demos/xv-anos.html</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://invitaciones.ambarrojostudios.com/demos/bautizo.html</loc>
+    <loc>https://celeclick.com/demos/bautizo.html</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://invitaciones.ambarrojostudios.com/demos/cumpleanos.html</loc>
+    <loc>https://celeclick.com/demos/cumpleanos.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://celeclick.com/demos/babyshower.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://celeclick.com/demos/graduacion.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://celeclick.com/demos/empresa.html</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>

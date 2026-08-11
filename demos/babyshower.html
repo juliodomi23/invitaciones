@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Demo: Invitación Digital de Babyshower — Renata | celeclick</title>
+<meta name="description" content="Demo funcional de invitación digital de babyshower: cuenta regresiva, ubicación, consejos para mamá, registro de regalos y confirmación de asistencia (RSVP).">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://celeclick.com/demos/babyshower.html">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="es_MX">
+<meta property="og:site_name" content="celeclick">
+<meta property="og:title" content="Demo: Invitación Digital de Babyshower">
+<meta property="og:description" content="Cuenta regresiva, ubicación, consejos para mamá y RSVP — así se ve una invitación digital de babyshower hecha a la medida.">
+<meta property="og:image" content="https://images.unsplash.com/photo-1622290319146-7b63df48a635?w=1200&q=75&auto=format&fit=crop">
+<meta property="og:url" content="https://celeclick.com/demos/babyshower.html">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Demo: Invitación Digital de Babyshower">
+<meta name="twitter:description" content="Cuenta regresiva, consejos para mamá y RSVP — invitación digital de babyshower a la medida.">
+<meta name="twitter:image" content="https://images.unsplash.com/photo-1622290319146-7b63df48a635?w=1200&q=75&auto=format&fit=crop">
+<meta name="theme-color" content="#7C9473">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://images.unsplash.com">
+
+<!--
+  PLANTILLA DE INVITACIÓN DIGITAL — celeclick (tipo de evento nuevo: babyshower)
+  Para personalizar por cliente, reemplazar:
+   - Nombre del bebé: "Renata" (buscar y reemplazar en todo el archivo)
+   - Fecha: 18.10.26 y el bloque EVENT_DATE del countdown
+   - Dirección, horario y datos del registro de regalos
+   - Fotos: hoy son de Unsplash de referencia — reemplazar por las fotos reales de los papás
+   - Enlace de RSVP: mismo mecanismo que boda.html — con ?event=&g=&n= guarda en Neon vía
+     el webhook de n8n "Invitaciones — RSVP"; sin esos parámetros el RSVP es solo local (demo).
+-->
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Caveat:wght@600;700&family=Quicksand:wght@400;500;600;700&display=swap');
+
+  :root{
+    --paper:#FBF7F0;
+    --paper-2:#F3EEE3;
+    --ink:#3D3A34;
+    --ink-soft:#84806f;
+    --sage:#7C9473;
+    --sage-dark:#5C7452;
+    --dust:#93A9BE;
+    --dust-soft:#E4EBF1;
+    --gold:#C68A2E;
+    --line:#E5DFD0;
+    --serif:'Fraunces', 'Times New Roman', serif;
+    --script:'Caveat', cursive;
+    --sans:'Quicksand', system-ui, sans-serif;
+  }
+
+  *{ margin:0; padding:0; box-sizing:border-box; }
+  html{ scroll-behavior:smooth; }
+  body{ background:var(--paper); color:var(--ink); font-family:var(--sans); font-size:17px; font-weight:500; line-height:1.65; overflow-x:hidden; padding-top:38px; }
+  ::selection{ background:var(--sage); color:#fff; }
+  .wrap{ max-width:640px; margin:0 auto; padding:0 28px; }
+  section{ position:relative; }
+  h1,h2,h3{ font-family:var(--serif); font-weight:600; }
+
+  .eyebrow{ font-family:var(--sans); font-weight:700; font-size:12px; letter-spacing:.2em; text-transform:uppercase; color:var(--sage-dark); }
+  .rule{ width:44px; height:1px; background:var(--gold); margin:18px auto; }
+  h2.section-title{ text-align:center; font-size:clamp(28px,6vw,38px); }
+
+  /* ---------- overlay de apertura ---------- */
+  #envelope{
+    position:fixed; inset:0; z-index:50;
+    background:
+      linear-gradient(rgba(60,72,55,.55), rgba(50,62,60,.75)),
+      url('https://images.unsplash.com/photo-1622290319146-7b63df48a635?w=1200&q=70&auto=format&fit=crop') center/cover;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    color:#fff; text-align:center; gap:22px;
+    transition:transform .9s cubic-bezier(.65,0,.35,1), opacity .7s ease;
+  }
+  #envelope.open{ transform:translateY(-100%); opacity:0; pointer-events:none; }
+  #envelope .seal{ width:70px; height:70px; border-radius:50%; background:rgba(255,255,255,.16); display:flex; align-items:center; justify-content:center; font-size:30px; }
+  #envelope .env-names{ font-family:var(--script); font-size:24px; opacity:.9; }
+  #envelope button{ font-family:var(--sans); font-weight:700; font-size:15px; color:var(--sage-dark); background:#fff; border:none; padding:13px 34px; border-radius:99px; cursor:pointer; }
+  #envelope .hint{ font-size:11px; letter-spacing:.18em; text-transform:uppercase; opacity:.6; }
+
+  .reveal{ opacity:0; transform:translateY(22px); transition:opacity .8s ease, transform .8s ease; }
+  .reveal.show{ opacity:1; transform:none; }
+  .gal-grid img{ opacity:0; transform:scale(.94); transition:opacity .6s ease, transform .6s ease; }
+  .reveal.show .gal-grid img{ opacity:1; transform:none; }
+  .gal-grid img:nth-child(1){ transition-delay:.05s; } .gal-grid img:nth-child(2){ transition-delay:.1s; }
+  .gal-grid img:nth-child(3){ transition-delay:.15s; } .gal-grid img:nth-child(4){ transition-delay:.2s; }
+  form button{ animation:pulse-rsvp 2.8s ease-in-out infinite; }
+  @keyframes pulse-rsvp{ 0%,100%{ box-shadow:0 0 0 0 rgba(124,148,115,.4); } 50%{ box-shadow:0 0 0 9px rgba(124,148,115,0); } }
+  @media (prefers-reduced-motion: reduce){ .gal-grid img{ opacity:1; transform:none; transition:none; } form button{ animation:none; } }
+
+  /* ---------- hero ---------- */
+  #hero{
+    min-height:100svh; display:flex; flex-direction:column; align-items:center; justify-content:flex-end;
+    text-align:center; padding:80px 28px 64px;
+    width:100vw; margin-left:calc(50% - 50vw); margin-right:calc(50% - 50vw);
+    background:
+      linear-gradient(to bottom, rgba(124,148,115,.12) 0%, rgba(60,72,55,.3) 55%, rgba(40,50,44,.9) 100%),
+      url('https://images.unsplash.com/photo-1543346242-2b8e41fb91ca?w=1400&q=70&auto=format&fit=crop') center 35%/cover;
+    color:#fff;
+  }
+  #hero .date-tag{ font-size:13px; letter-spacing:.3em; color:#EAF1E6; margin-bottom:18px; }
+  #hero .eyebrow{ color:#CFE0C8; }
+  #hero h1{ font-family:var(--script); font-weight:700; font-size:clamp(50px,13vw,88px); margin:14px 0; }
+  #hero p.quote{ font-style:italic; font-family:var(--serif); color:#EAF1E6; max-width:400px; margin-top:18px; font-size:16px; }
+
+  /* ---------- countdown ---------- */
+  #countdown{ padding:64px 0; text-align:center; }
+  .cd-grid{ display:flex; justify-content:center; gap:clamp(10px,4vw,28px); margin-top:24px; }
+  .cd-unit{ min-width:64px; }
+  .cd-unit b{ display:block; font-family:var(--serif); font-size:clamp(30px,6vw,44px); color:var(--sage-dark); line-height:1; }
+  .cd-unit span{ display:block; font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--ink-soft); margin-top:8px; }
+
+  .card{ background:var(--paper-2); border:1px solid var(--line); border-radius:14px; padding:30px 26px; margin-top:18px; }
+  .venue{ text-align:center; }
+  .venue h3{ font-size:22px; margin:6px 0 4px; }
+  .venue .time{ font-family:var(--script); color:var(--sage-dark); font-size:19px; }
+  .venue address{ font-style:normal; color:var(--ink-soft); font-size:14.5px; margin:8px 0 16px; }
+  .btn{ display:inline-block; font-weight:700; font-size:14px; color:var(--sage-dark); border:1.5px solid var(--sage); padding:10px 24px; border-radius:99px; text-decoration:none; transition:background .2s ease, color .2s ease; }
+  .btn:hover{ background:var(--sage); color:#fff; }
+
+  /* ---------- consejos para mamá ---------- */
+  #consejos{ padding:64px 0; }
+  .tips-grid{ display:grid; gap:14px; margin-top:30px; }
+  .tip{ background:var(--dust-soft); border-radius:14px; padding:22px 24px; }
+  .tip p{ font-family:var(--serif); font-style:italic; font-size:16px; color:var(--ink); }
+  .tip span{ display:block; margin-top:10px; font-size:12.5px; color:var(--ink-soft); font-weight:700; }
+
+  .two-col{ display:grid; gap:16px; margin-top:18px; }
+  @media(min-width:560px){ .two-col{ grid-template-columns:1fr 1fr; } }
+  .info-card{ background:var(--paper-2); border:1px solid var(--line); padding:26px; text-align:center; border-radius:14px; }
+  .info-card h3{ font-size:19px; margin-bottom:8px; }
+  .info-card p{ font-size:14.5px; color:var(--ink-soft); }
+
+  #galeria{ padding:64px 0; text-align:center; }
+  .gal-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:28px; }
+  .gal-grid img{ width:100%; aspect-ratio:1/1; object-fit:cover; border-radius:10px; }
+
+  #rsvp{ padding:64px 0; text-align:center; }
+  form{ margin-top:30px; display:flex; flex-direction:column; gap:14px; text-align:left; }
+  form label{ font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-soft); display:block; margin-bottom:6px; }
+  form input, form select, form textarea{ width:100%; font:inherit; font-size:15px; padding:12px 14px; border-radius:10px; border:1px solid var(--line); background:var(--paper); color:var(--ink); outline:none; }
+  form input:focus, form select:focus, form textarea:focus{ border-color:var(--sage); }
+  .radio-row{ display:flex; gap:10px; }
+  .radio-row label{ flex:1; border:1px solid var(--line); border-radius:10px; padding:12px; text-align:center; cursor:pointer; font-size:14px; color:var(--ink); text-transform:none; letter-spacing:0; }
+  .radio-row input{ display:none; }
+  .radio-row input:checked + span{ color:var(--sage-dark); font-weight:700; }
+  form button{ margin-top:8px; font-weight:700; font-size:16px; background:var(--sage); color:#fff; border:none; padding:15px; border-radius:99px; cursor:pointer; }
+  #rsvp-ok{ display:none; margin-top:18px; color:var(--sage-dark); font-style:italic; font-family:var(--serif); }
+
+  footer{ padding:70px 0 50px; text-align:center; }
+  footer .name{ font-family:var(--script); color:var(--sage-dark); font-size:32px; }
+  footer .credit{ margin-top:40px; font-size:11px; letter-spacing:.1em; color:var(--ink-soft); opacity:.6; }
+
+  #demo-bar{ position:fixed; top:0; left:0; right:0; z-index:60; background:var(--ink); color:var(--paper); display:flex; align-items:center; justify-content:center; gap:14px; font-size:13px; padding:9px 14px; text-align:center; }
+  #demo-bar a{ color:var(--paper); text-decoration:underline; text-underline-offset:3px; }
+  #demo-bar b{ color:var(--gold); }
+</style>
+</head>
+<body>
+
+<div id="demo-bar">
+  <span><b>Demo</b> · Invitación de Babyshower — celeclick</span>
+  <a href="../index.html">← Ver todos los diseños</a>
+</div>
+
+<div id="envelope">
+  <div class="seal">🌙</div>
+  <div class="env-names">Renata está por llegar</div>
+  <div class="hint" id="guest-greeting" style="display:none; margin-top:-8px;"></div>
+  <button id="envelope-btn">Abrir invitación</button>
+  <div class="hint">Toca para continuar</div>
+</div>
+
+<main class="wrap">
+
+  <section id="hero">
+    <p class="eyebrow">Se viene alguien nuevo</p>
+    <h1>Renata</h1>
+    <p class="quote">"Un ratito antes de conocerte, ya te queremos con todo el corazón." Acompáñanos a celebrar su llegada.</p>
+    <div class="date-tag" style="margin-top:20px;">18 · 10 · 2026 · 17:00 h</div>
+  </section>
+
+  <section id="countdown" class="reveal">
+    <p class="eyebrow">Falta muy poco</p>
+    <div class="cd-grid">
+      <div class="cd-unit"><b id="cd-d">00</b><span>Días</span></div>
+      <div class="cd-unit"><b id="cd-h">00</b><span>Hrs</span></div>
+      <div class="cd-unit"><b id="cd-m">00</b><span>Min</span></div>
+      <div class="cd-unit"><b id="cd-s">00</b><span>Seg</span></div>
+    </div>
+  </section>
+
+  <section id="ubicacion" class="reveal" style="padding:64px 0;">
+    <h2 class="section-title">Dónde celebramos</h2>
+    <div class="rule"></div>
+    <div class="card venue">
+      <p class="eyebrow">Celebración</p>
+      <h3>Jardín Las Magnolias</h3>
+      <p class="time">17:00 h</p>
+      <address>Av. de los Sauces 88, Tuxtla Gutiérrez, Chis.</address>
+      <a class="btn" href="https://maps.google.com" target="_blank" rel="noopener">Ver ubicación</a>
+    </div>
+  </section>
+
+  <section id="consejos" class="reveal">
+    <h2 class="section-title">Consejos para mamá</h2>
+    <div class="rule"></div>
+    <div class="tips-grid">
+      <div class="tip"><p>"Duerme cuando el bebé duerma — el resto puede esperar."</p><span>— Tía Marcela</span></div>
+      <div class="tip"><p>"Pide ayuda sin culpa, todos queremos consentirte a ti también."</p><span>— Sofía</span></div>
+      <div class="tip"><p>"Disfruta cada etapa, pasan más rápido de lo que crees."</p><span>— Abuela Tere</span></div>
+    </div>
+  </section>
+
+  <section style="padding:64px 0;" class="reveal">
+    <h2 class="section-title">Detalles</h2>
+    <div class="rule"></div>
+    <div class="two-col">
+      <div class="info-card">
+        <h3>Código de vestimenta</h3>
+        <p>Casual, tonos tierra — sage, azul polvo y crema</p>
+      </div>
+      <div class="info-card">
+        <h3>Registro de regalos</h3>
+        <p>Tenemos una lista en Liverpool y Amazon a nombre de Renata — pregúntanos por el link.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="galeria" class="reveal">
+    <h2 class="section-title">Esperándote</h2>
+    <div class="rule"></div>
+    <div class="gal-grid">
+      <img src="https://images.unsplash.com/photo-1505043203398-7e4c111acbfa?w=400&q=70&auto=format&fit=crop" alt="Ropita de bebé colgada">
+      <img src="https://images.unsplash.com/photo-1528218635780-5952720c9729?w=400&q=70&auto=format&fit=crop" alt="Pareja mostrando ultrasonido">
+      <img src="https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=400&q=70&auto=format&fit=crop" alt="Globos de colores">
+      <img src="https://images.unsplash.com/photo-1546074176-abecd33d2b53?w=400&q=70&auto=format&fit=crop" alt="Letras decorativas We are having a baby">
+      <img src="https://images.unsplash.com/photo-1622290319146-7b63df48a635?w=400&q=70&auto=format&fit=crop" alt="Body de bebé sobre fondo neutro">
+      <img src="https://images.unsplash.com/photo-1543346242-2b8e41fb91ca?w=400&q=70&auto=format&fit=crop" alt="Ovejitas de peluche decorativas">
+    </div>
+  </section>
+
+  <section id="rsvp" class="reveal">
+    <h2 class="section-title">Confirma tu asistencia</h2>
+    <div class="rule"></div>
+    <p style="color:var(--ink-soft); font-size:15px; margin-top:10px;">Antes del 10 de octubre de 2026</p>
+    <form id="rsvp-form">
+      <div>
+        <label for="nombre">Nombre completo</label>
+        <input id="nombre" required placeholder="¿Quién confirma?">
+      </div>
+      <div>
+        <label>¿Asistirás?</label>
+        <div class="radio-row">
+          <label><input type="radio" name="asiste" value="si" checked><span>Sí, ahí estaré</span></label>
+          <label><input type="radio" name="asiste" value="no"><span>No podré ir</span></label>
+        </div>
+      </div>
+      <div>
+        <label for="msg">Mensaje (opcional)</label>
+        <textarea id="msg" rows="3" placeholder="Un deseo para Renata y sus papás"></textarea>
+      </div>
+      <div>
+        <label for="restricciones">Alergias o restricciones alimenticias (opcional)</label>
+        <input id="restricciones" placeholder="Ej. vegetariano, sin gluten">
+      </div>
+      <button type="submit">Enviar confirmación</button>
+    </form>
+    <p id="rsvp-ok">¡Gracias! Tu confirmación fue registrada.</p>
+  </section>
+
+  <footer class="reveal">
+    <div class="name">Renata</div>
+    <p style="margin-top:10px; font-style:italic; color:var(--ink-soft);">18 de octubre, 2026</p>
+    <p class="credit">Invitación digital · celeclick</p>
+  </footer>
+
+</main>
+
+<script>
+  document.getElementById('envelope-btn').addEventListener('click', () => {
+    document.getElementById('envelope').classList.add('open');
+    document.body.style.overflow = 'auto';
+  });
+  document.body.style.overflow = 'hidden';
+
+  // countdown — ponytail: fecha fija de ejemplo, cambiar al personalizar
+  const EVENT_DATE = new Date('2026-10-18T17:00:00-06:00').getTime();
+  function tick(){
+    const diff = EVENT_DATE - Date.now();
+    const d = Math.max(0, Math.floor(diff / 86400000));
+    const h = Math.max(0, Math.floor((diff % 86400000) / 3600000));
+    const m = Math.max(0, Math.floor((diff % 3600000) / 60000));
+    const s = Math.max(0, Math.floor((diff % 60000) / 1000));
+    document.getElementById('cd-d').textContent = String(d).padStart(2,'0');
+    document.getElementById('cd-h').textContent = String(h).padStart(2,'0');
+    document.getElementById('cd-m').textContent = String(m).padStart(2,'0');
+    document.getElementById('cd-s').textContent = String(s).padStart(2,'0');
+  }
+  tick();
+  setInterval(tick, 1000);
+
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('show'); });
+  }, { threshold: 0.15 });
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+  const params = new URLSearchParams(location.search);
+  const guestSlug = params.get('g');
+  const guestName = params.get('n');
+  const eventSlug = params.get('event');
+  if (guestName){
+    const greeting = document.getElementById('guest-greeting');
+    greeting.textContent = `Esta invitación es para ${guestName}`;
+    greeting.style.display = 'block';
+    const nombreInput = document.getElementById('nombre');
+    nombreInput.value = guestName;
+    nombreInput.readOnly = true;
+  }
+
+  const RSVP_WEBHOOK = 'https://n8nambarrojo.ambarrojostudios.cloud/webhook/invitaciones-rsvp';
+  document.getElementById('rsvp-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const asiste = e.target.querySelector('input[name="asiste"]:checked').value;
+    const mensaje = document.getElementById('msg').value;
+    const restricciones = document.getElementById('restricciones').value;
+    if (guestSlug && eventSlug){
+      try {
+        await fetch(RSVP_WEBHOOK, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ slug: guestSlug, event: eventSlug, asiste, mensaje, restricciones })
+        });
+      } catch (err) {
+        // ponytail: sin reintentos ni cola offline — si falla la red, el invitado puede reenviar el formulario
+      }
+    }
+    document.getElementById('rsvp-ok').style.display = 'block';
+    e.target.reset();
+  });
+</script>
+
+</body>
+</html>
