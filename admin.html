@@ -11,11 +11,12 @@
   Consulta el workflow de n8n "Invitaciones — Lista de Invitados" (webhook GET).
   Deja el campo de evento vacío para ver todos los eventos juntos.
 
-  SEGURIDAD: ver todos los eventos juntos (evento vacío) requiere API_KEY — es la única
-  forma de listar los invitados de todos los clientes a la vez, así que esta página no es
-  para compartir. Los clientes usan mi-panel.html, que solo necesita el slug de su evento
-  (ese webhook no exige key cuando ya se manda un evento específico).
-  Si cambias la clave aquí, cámbiala también en el workflow de n8n (nodo "Preparar filtro").
+  SEGURIDAD: la clave NO vive en este archivo — nginx lo sirve estático y sin login, así que
+  cualquiera que abriera la URL se la llevaba. Se pide al entrar (prompt) y se guarda en
+  localStorage del navegador de quien la escribió, no en el HTML. Si cambias la clave,
+  cámbiala en el workflow de n8n (nodo "Preparar filtro") y cada quien la vuelve a escribir
+  aquí la próxima vez que entre (botón "Cambiar clave" al fondo del toolbar).
+  Los clientes usan mi-panel.html, que no necesita clave (solo el slug de su evento).
 -->
 
 <style>
@@ -58,6 +59,7 @@
   <div class="toolbar">
     <input id="evento" placeholder="Slug del evento (ej. valentina-mateo) — vacío = todos">
     <button id="buscar">Buscar</button>
+    <button id="cambiar-clave" style="background:transparent; color:var(--ink-soft); border:1px solid var(--line);">Cambiar clave</button>
   </div>
 
   <div class="summary" id="resumen"></div>
@@ -73,8 +75,21 @@
 
 <script>
   const LIST_WEBHOOK = 'https://n8nambarrojo.ambarrojostudios.cloud/webhook/invitaciones-lista';
-  const API_KEY = '4f60a1bb2d4dee4a373f2b45c3952363';
   const STATUS_LABEL = { confirmado: 'Confirmó', no_asiste: 'No asiste', pendiente: 'Pendiente' };
+
+  function getApiKey(){
+    let key = localStorage.getItem('invitaciones_api_key');
+    if (!key){
+      key = (prompt('Clave de acceso del equipo:') || '').trim();
+      if (key) localStorage.setItem('invitaciones_api_key', key);
+    }
+    return key;
+  }
+  document.getElementById('cambiar-clave').addEventListener('click', () => {
+    localStorage.removeItem('invitaciones_api_key');
+    getApiKey();
+    cargar();
+  });
 
   async function cargar(){
     const evento = document.getElementById('evento').value.trim();
@@ -88,7 +103,7 @@
     try {
       const url = new URL(LIST_WEBHOOK);
       if (evento) url.searchParams.set('event', evento);
-      url.searchParams.set('key', API_KEY);
+      url.searchParams.set('key', getApiKey());
       const res = await fetch(url);
       const guests = (await res.json()).guests;
 
